@@ -102,10 +102,14 @@
     const fallbackMeanings = ["n. 缺点，瑕疵", "v. 维持，保持", "adj. 明显的", "n. 复杂性", "v. 评估，估计", "n. 繁荣", "adj. 偶然的"];
 
     function initData() {
-        // 🎯 精准接入专属数据轨道变量 henryWordData
+        // 🎯 纯粹链接端：只负责去检测全局变量 henryWordData。
+        // 如果连不上（即未定义），localWords 保持为空，页面会直观地显示“❌ 找不到单词数据”
         if (typeof henryWordData !== 'undefined') {
             localWords = henryWordData;
+        } else if (typeof window.henryWordData !== 'undefined') {
+            localWords = window.henryWordData;
         }
+        
         renderCard();
         initTestCard();
     }

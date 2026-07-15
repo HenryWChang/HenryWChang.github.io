@@ -42,6 +42,8 @@
     <a href="#introduce">Introduce</a>
     <a href="#vocabulary">Know Basic Words</a>
     <a href="#test-section">Test Basic Words</a>
+    <a href="#root-vocabulary">Know The Root</a> <!-- ⬇️ 新增这两行 -->
+    <a href="#root-test-section">Test The Root</a>
   </nav>
 
   <div class="container">
@@ -84,6 +86,37 @@
       </div>
     </section>
 
+      <!-- 🎯 新增：Know The Root 栏目 -->
+    <section id="root-vocabulary">
+      <h2>🎯 Know The Root</h2>
+      <div class="word-box">
+        <div id="root-word" class="word-title">Loading...</div>
+        <div id="root-meaning" class="word-meaning">Translation loading...</div>
+        <div class="btn-group">
+          <button class="secondary" onclick="showRootMeaning()">Show Meaning (看释义)</button>
+          <button onclick="nextRootWord()">Next Root (下一个)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ✍️ 新增：Test The Root 栏目 -->
+    <section id="root-test-section">
+      <h2>✍️ Test The Root</h2>
+      <div class="word-box">
+        <div id="root-test-word" class="word-title">Loading...</div>
+        
+        <!-- 6个词根中文选项的容器 -->
+        <div id="root-options-container" class="options-group"></div>
+        
+        <!-- 对错提示区域 -->
+        <div id="root-test-feedback" class="feedback"></div>
+        
+        <div class="btn-group">
+          <button id="root-test-next-btn" onclick="submitOrNextRootTest()">Next (确认/下一个)</button>
+        </div>
+      </div>
+    </section>
+
   <footer>
     &copy; <span id="year"></span> Henry W. Chang. All rights reserved.
   </footer>
@@ -91,81 +124,45 @@
   <script src="data.js"></script>
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
-    // 🧬 专属数据库变量绑定
+    // 🧬 A轨：Basic Words 变量声明
     let currentIndex = 0;
     let localWords = [];
     let testIndex = 0;
     let currentOptions = [];
     let isAnswerSubmitted = false; 
 
-    // 随机假数据包：防止Henry数据库单词不够6个时混淆选项崩溃
+    // 🧬 B轨：Root Words 变量声明 (✨新增独立命名空间)
+    let rootCurrentIndex = 0;
+    let localRootWords = [];
+    let rootTestIndex = 0;
+    let rootCurrentOptions = [];
+    let isRootAnswerSubmitted = false;
+
+    // 随机假数据包
     const fallbackMeanings = ["n. 缺点，瑕疵", "v. 维持，保持", "adj. 明显的", "n. 复杂性", "v. 评估，估计", "n. 繁荣", "adj. 偶然的"];
 
     function initData() {
-        // 🎯 纯粹链接端：只负责去检测全局变量 henryWordData。
-        // 如果连不上（即未定义），localWords 保持为空，页面会直观地显示“❌ 找不到单词数据”
+        // 🎯 纯粹链接端A：精准链接 Basic 词库
         if (typeof henryWordData !== 'undefined') {
             localWords = henryWordData;
         } else if (typeof window.henryWordData !== 'undefined') {
             localWords = window.henryWordData;
         }
         
+        // 🎯 纯粹链接端B：精准链接 Root 词库 (✨新增)
+        if (typeof henryRootData !== 'undefined') {
+            localRootWords = henryRootData;
+        } else if (typeof window.henryRootData !== 'undefined') {
+            localRootWords = window.henryRootData;
+        }
+        
+        // 联动渲染 Basic 板块
         renderCard();
         initTestCard();
-    }
 
-    function renderCard() {
-        if (!localWords || localWords.length === 0) {
-            document.getElementById('word').innerText = "❌ 找不到单词数据\n请检查 data.js 文件";
-            return;
-        }
-        document.getElementById('word').innerText = localWords[currentIndex].word;
-        document.getElementById('meaning').innerText = localWords[currentIndex].meaning;
-        document.getElementById('meaning').style.display = 'none'; 
-    }
-
-    function showMeaning() {
-        if(localWords.length > 0) {
-            document.getElementById('meaning').style.display = 'block';
-        }
-    }
-
-    function nextWord() {
-        if(localWords.length > 0) {
-            currentIndex = (currentIndex + 1) % localWords.length;
-            renderCard();
-        }
-    }
-
-    function initTestCard() {
-        if (!localWords || localWords.length === 0) return;
-        isAnswerSubmitted = false;
-        document.getElementById('test-feedback').innerText = "";
-        document.getElementById('test-feedback').style.color = "";
-        document.getElementById('test-next-btn').innerText = "Submit (确认答案)";
-        
-        let currentWord = localWords[testIndex];
-        document.getElementById('test-word').innerText = currentWord.word;
-        
-        let pool = localWords.map(w => w.meaning).filter(m => m !== currentWord.meaning);
-        pool = pool.concat(fallbackMeanings);
-        pool.sort(() => 0.5 - Math.random());
-        
-        let choices = pool.slice(0, 5);
-        choices.push(currentWord.meaning);
-        choices.sort(() => 0.5 - Math.random());
-        currentOptions = choices;
-        
-        let container = document.getElementById('options-container');
-        container.innerHTML = "";
-        choices.forEach((meaning, idx) => {
-            container.innerHTML += `
-                <label class="option-item">
-                    <input type="radio" name="henry-option" value="${meaning}">
-                    ${idx + 1}. ${meaning}
-                </label>
-            `;
-        });
+        // 联动渲染 Root 板块 (✨新增)
+        renderRootCard();
+        initRootTestCard();
     }
 
     function submitOrNextTest() {
@@ -195,6 +192,92 @@
         }
     }
 
+    // ==========================================
+    // 🧠 新增：Know The Root 专属控制逻辑
+    // ==========================================
+    function renderRootCard() {
+        if (!localRootWords || localRootWords.length === 0) {
+            document.getElementById('root-word').innerText = "❌ 找不到词根数据\n请检查 data.js 文件";
+            return;
+        }
+        document.getElementById('root-word').innerText = localRootWords[rootCurrentIndex].word;
+        document.getElementById('root-meaning').innerText = localRootWords[rootCurrentIndex].meaning;
+        document.getElementById('root-meaning').style.display = 'none'; 
+    }
+
+    function showRootMeaning() {
+        if(localRootWords.length > 0) {
+            document.getElementById('root-meaning').style.display = 'block';
+        }
+    }
+
+    function nextRootWord() {
+        if(localRootWords.length > 0) {
+            rootCurrentIndex = (rootCurrentIndex + 1) % localRootWords.length;
+            renderRootCard();
+        }
+    }
+
+    // ==========================================
+    // 🧠 新增：Test The Root 专属单选控制逻辑
+    // ==========================================
+    function initRootTestCard() {
+        if (!localRootWords || localRootWords.length === 0) return;
+        isRootAnswerSubmitted = false;
+        document.getElementById('root-test-feedback').innerText = "";
+        document.getElementById('root-test-feedback').style.color = "";
+        document.getElementById('root-test-next-btn').innerText = "Submit (确认答案)";
+        
+        let currentWord = localRootWords[rootTestIndex];
+        document.getElementById('root-test-word').innerText = currentWord.word;
+        
+        let pool = localRootWords.map(w => w.meaning).filter(m => m !== currentWord.meaning);
+        pool = pool.concat(fallbackMeanings);
+        pool.sort(() => 0.5 - Math.random());
+        
+        let choices = pool.slice(0, 5);
+        choices.push(currentWord.meaning);
+        choices.sort(() => 0.5 - Math.random());
+        rootCurrentOptions = choices;
+        
+        let container = document.getElementById('root-options-container');
+        container.innerHTML = "";
+        choices.forEach((meaning, idx) => {
+            container.innerHTML += `
+                <label class="option-item">
+                    <input type="radio" name="root-option" value="${meaning}">
+                    ${idx + 1}. ${meaning}
+                </label>
+            `;
+        });
+    }
+
+    function submitOrNextRootTest() {
+        if (!localRootWords || localRootWords.length === 0) return;
+        let currentWord = localRootWords[rootTestIndex];
+        let feedbackEl = document.getElementById('root-test-feedback');
+        
+        if (!isRootAnswerSubmitted) {
+            let selected = document.querySelector('input[name="root-option"]:checked');
+            if (!selected) {
+                feedbackEl.innerText = "⚠️ 请先选择一个答案！";
+                feedbackEl.style.color = "#eab308";
+                return;
+            }
+            isRootAnswerSubmitted = true;
+            if (selected.value === currentWord.meaning) {
+                feedbackEl.innerText = "✅ 正确！太棒了。";
+                feedbackEl.style.color = "#16a34a";
+            } else {
+                feedbackEl.innerText = `❌ 错误！正确答案是：${currentWord.meaning}`;
+                feedbackEl.style.color = "#dc2626";
+            }
+            document.getElementById('root-test-next-btn').innerText = "Next Root (下一个)";
+        } else {
+            rootTestIndex = (rootTestIndex + 1) % localRootWords.length;
+            initRootTestCard();
+        }
+    }
     // 绑定自适应加载
     window.onload = initData;
   </script>

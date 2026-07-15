@@ -135,6 +135,34 @@
       margin: 15px 0;
       min-height: 28px;
     }
+    /* 🎯 词典区表格与星号遮罩排版 */
+    .dict-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 15px;
+    }
+    .dict-table th, .dict-table td {
+      border: 1px solid #e5e7eb;
+      padding: 10px 12px;
+      text-align: left;
+    }
+    .dict-table th {
+      background: #f8fafc;
+      color: #0f172a;
+      font-weight: 600;
+    }
+    .dict-table tr:hover {
+      background: #fdfdfd;
+    }
+    .masked-meaning {
+      cursor: pointer;
+      user-select: none;
+    }
+    .dict-btn-container {
+      margin-bottom: 15px;
+      text-align: right;
+    }
   </style>
 </head>
 
@@ -148,6 +176,7 @@
     <a href="../">← Back to Home (返回主页)</a>
     <a href="#vocabulary">Know The Words</a>
     <a href="#test-section">Test The Words</a>
+    <a href="dict-section">The Dictionary</a>
   </nav>
 
   <div class="container">
@@ -187,6 +216,29 @@
           </div>
         </div>
       </section>
+      <!-- 📝 新增的 The Dictionary 栏目 -->
+      <section id="dict-section">
+        <h2>📖 The Dictionary</h2>
+        <div style="padding: 10px 0;">
+          <div class="dict-btn-container">
+            <button class="secondary" onclick="toggleAllDictMeanings()">Toggle Mask (一键星号隐藏/显示)</button>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="dict-table">
+              <thead>
+                <tr>
+                  <th style="width: 8%;">No.</th>
+                  <th style="width: 30%;">Word</th>
+                  <th>Meaning (点击可单独反显)</th>
+                </tr>
+              </thead>
+              <tbody id="dict-table-body">
+                <!-- 由 JavaScript 动态渲染 -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
     </div>
 
   <footer>
@@ -217,6 +269,7 @@
         
         renderCard();
         initTestCard(); // 🛠️ 初始化第一个测试词
+        renderDictionary(); // 🛠️ 新增：初始化渲染词典列表
     }
 
     function renderCard() {
@@ -311,6 +364,48 @@
             testIndex = (testIndex + 1) % localWords.length;
             initTestCard();
         }
+    }
+    let isAllMasked = false; // 全局状态：当前中文是否一键隐藏
+
+    // 🛠️ 渲染词典表格
+    function renderDictionary() {
+        let tbody = document.getElementById('dict-table-body');
+        if (!tbody || !localWords || localWords.length === 0) return;
+
+        tbody.innerHTML = "";
+        localWords.forEach((item, idx) => {
+            // 根据全局状态判断初始显示明文还是星号
+            let displayTxt = isAllMasked ? "***" : item.meaning;
+            tbody.innerHTML += `
+                <tr>
+                    <td>${idx + 1}</td>
+                    <td><strong>${item.word}</strong></td>
+                    <td class="masked-meaning" onclick="toggleSingleMeaning(this, '${item.meaning.replace(/'/g, "\\'")}')" data-status="${isAllMasked ? 'masked' : 'shown'}">
+                        ${displayTxt}
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // 🛠️ 单个点击中文：隐藏变显示，显示变隐藏
+    function toggleSingleMeaning(el, realMeaning) {
+        let status = el.getAttribute('data-status');
+        if (status === 'masked') {
+            el.innerText = realMeaning;
+            el.setAttribute('data-status', 'shown');
+            el.style.color = "#0284c7"; // 反显时给个亮眼蓝色
+        } else {
+            el.innerText = "***";
+            el.setAttribute('data-status', 'masked');
+            el.style.color = "";
+        }
+    }
+
+    // 🛠️ 头部大按钮点击：一键隐藏/显示所有中文
+    function toggleAllDictMeanings() {
+        isAllMasked = !isAllMasked;
+        renderDictionary();
     }
     window.onload = initData;
   </script>

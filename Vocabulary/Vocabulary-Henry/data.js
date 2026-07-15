@@ -1,11 +1,14 @@
-// 轨 1 🎯【Henry专属接入端】以后你的 Python 脚本或者你手动添加的真单词，全放在这里！
+// ==========================================
+// 📦 A 轨：Basic Words 词库 (已隔离)
+// ==========================================
+// 轨 1 🎯【Henry专属Basic接入端】
 const henryCustomWords = [
     {"word": "mimic", "meaning": "v. 模仿，模拟"},
     {"word": "indispensable", "meaning": "adj. 不可或缺的"},
     {"word": "paradigm", "meaning": "n. 范式，典范"}
 ];
 
-// 轨 2 🚨【Henry专属保险丝】当轨1被清空或为空时自动撑场面，防止网页因无数据而崩溃
+// 轨 2 🚨【Henry专属Basic保险丝】
 const henryFallbackWords = [
     {"word": "meticulous", "meaning": "adj. 一丝不苟的，缜密的（Henry范例）"},
     {"word": "cohesive", "meaning": "adj. 凝聚的，紧密结合的（Henry范例）"},
@@ -15,7 +18,33 @@ const henryFallbackWords = [
     {"word": "advocate", "meaning": "v. 提倡，拥护（Henry范例）"}
 ];
 
-// 🎛️ 终极融合开关：输出专属变量 "henryWordData" 给展示端网页精准抓取
+// 🎛️ Basic 融合开关
 const henryWordData = (typeof henryCustomWords !== 'undefined' && henryCustomWords.length > 0) 
     ? henryCustomWords 
     : henryFallbackWords;
+
+
+// ==========================================
+// 📦 B 轨：Root Words 词库 (✨本次新增)
+// ==========================================
+// 轨 1 🎯【Henry专属Root词根接入端】
+const henryRootCustomWords = [
+    {"word": "bio-", "meaning": "pref. 生命，生物 (例如: biology, biography)"},
+    {"word": "chron-", "meaning": "pref. 时间 (例如: chronological, chronic)"},
+    {"word": "dict-", "meaning": "pref. 言，说 (例如: contradict, predict)"}
+];
+
+// 轨 2 🚨【Henry专属Root词根保险丝】
+const henryRootFallbackWords = [
+    {"word": "audi-", "meaning": "pref. 听 (例如: audience, audible)（Root范例）"},
+    {"word": "auto-", "meaning": "pref. 自己，自动 (例如: autonomy, automatic)（Root范例）"},
+    {"word": "spect-", "meaning": "pref. 看 (例如: inspect, retrospect)（Root范例）"},
+    {"word": "scrib/scrip-", "meaning": "pref. 写 (例如: prescribe, manuscript)（Root范例）"},
+    {"word": "tract-", "meaning": "pref. 拉，抽 (例如: attract, extract)（Root范例）"},
+    {"word": "vis/vid-", "meaning": "pref. 看见 (例如: visible, evident)（Root范例）"}
+];
+
+// 🎛️ Root 融合开关：输出专属变量 "henryRootData" 给网页精准抓取
+const henryRootData = (typeof henryRootCustomWords !== 'undefined' && henryRootCustomWords.length > 0) 
+    ? henryRootCustomWords 
+    : henryRootFallbackWords;

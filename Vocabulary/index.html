@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Henry W. Chang – Vocabulary Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7f7f7; color: #222; line-height: 1.6; }
+    header { background: #1e293b; color: #f9fafb; padding: 20px 40px; }
+    header h1 { margin: 0; font-size: 28px; }
+    header p { margin: 4px 0 0 0; font-size: 14px; opacity: 0.9; }
+    nav { background: #0f172a; padding: 8px 40px; }
+    nav a { color: #e5e7eb; margin-right: 16px; text-decoration: none; font-size: 14px; }
+    nav a:hover { text-decoration: underline; }
+    .container { max-width: 960px; margin: 24px auto 40px auto; padding: 0 16px; }
+    section { background: #ffffff; border-radius: 8px; padding: 30px 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08); }
+    section h2 { margin-top: 0; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; font-size: 20px; }
+    ul { padding-left: 18px; }
+    li { margin-bottom: 12px; }
+    footer { text-align: center; font-size: 12px; color: #6b7280; padding: 20px 0 30px 0; }
+    .tag { display: inline-block; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 999px; font-size: 11px; margin-left: 4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Henry W. Chang</h1>
+    <p>Personal academic homepage – notes, experiments, and ideas.</p>
+  </header>
+
+  <nav>
+    <a href="../">← Back to Home (返回主页)</a>
+    <a href="#hub">Vocabulary Hub</a>
+  </nav>
+
+  <div class="container">
+    <section id="hub">
+      <h2>📚 IELTS Vocabulary Hub</h2>
+      <p style="color: #555;">请选择你要复习的雅思词汇板块：</p>
+      <ul>
+        <li>
+          <strong><a href="./Vocabulary-Reading/" style="color: #0284c7; text-decoration: none; font-size: 18px;">IELTS Reading Words</a></strong>
+          <span class="tag">阅读</span><br />
+          包含自研的初识、单选测试、全局词典星号反显四大功能模块。
+        </li>
+        <li>
+          <strong><a href="./Vocabulary-Writing/" style="color: #0284c7; text-decoration: none; font-size: 18px;">IELTS Writing Words</a></strong>
+          <span class="tag">写作</span><br />
+          核心写作高分替换词与论证核心词汇库。
+        </li>
+      </ul>
+    </section>
+  </div>
+
+  <footer>
+    &copy; <span id="year"></span> Henry W. Chang. All rights reserved.
+  </footer>
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

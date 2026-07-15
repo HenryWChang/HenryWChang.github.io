@@ -5,7 +5,6 @@
   <title>Henry W. Chang – Vocabulary Builder</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    /* 🎨 完美继承你主页的全局样式 */
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -64,8 +63,6 @@
       color: #6b7280;
       padding: 20px 0 30px 0;
     }
-
-    /* 🎯 专属背单词核心样式（完美融入卡片） */
     .word-box {
       text-align: center;
       padding: 40px 20px;
@@ -87,7 +84,7 @@
       border-radius: 6px;
       max-width: 400px;
       border: 1px dashed #cbd5e1;
-      display: none; /* 默认隐藏 */
+      display: none;
     }
     .btn-group {
       margin-top: 25px;
@@ -117,20 +114,17 @@
 </head>
 
 <body>
-  <!-- 🎛️ 相同的顶部 Header -->
   <header>
     <h1>Henry W. Chang</h1>
     <p>Personal academic homepage – notes, experiments, and ideas.</p>
   </header>
 
-  <!-- 🧭 导航栏：加上了返回主页的链接 -->
   <nav>
     <a href="../">← Back to Home (返回主页)</a>
     <a href="#vocabulary">Vocabulary Builder</a>
   </nav>
 
   <div class="container">
-    <!-- 📦 嵌入在你熟悉的主页 Section 卡片里的背单词模块 -->
     <section id="vocabulary">
       <h2>🎯 Custom Vocabulary Builder</h2>
       
@@ -150,35 +144,50 @@
     &copy; <span id="year"></span> Henry W. Chang. All rights reserved.
   </footer>
 
-  <!-- 🧬 核心逻辑与数据引入 -->
+  <!-- 🧬 引入数据 -->
   <script src="data.js"></script>
   <script>
-    // 动态年份
     document.getElementById("year").textContent = new Date().getFullYear();
 
     let currentIndex = 0;
+    let localWords = [];
 
-    function renderCard() {
-        if (typeof wordData === 'undefined' || wordData.length === 0) {
-            document.getElementById('word').innerText = "No data found";
-            return;
+    function initData() {
+        // 🚨 【双保险防御】无论你的 data.js 里定义的是 wordData 还是 wordList，自动兼容
+        if (typeof wordData !== 'undefined') {
+            localWords = wordData;
+        } else if (typeof wordList !== 'undefined') {
+            localWords = wordList;
         }
-        document.getElementById('word').innerText = wordData[currentIndex].word;
-        document.getElementById('meaning').innerText = wordData[currentIndex].meaning;
-        document.getElementById('meaning').style.display = 'none'; // 换词时隐藏翻译
-    }
 
-    function showMeaning() {
-        document.getElementById('meaning').style.display = 'block';
-    }
-
-    function nextWord() {
-        currentIndex = (currentIndex + 1) % wordData.length;
         renderCard();
     }
 
-    // 初始化
-    window.onload = renderCard;
+    function renderCard() {
+        if (!localWords || localWords.length === 0) {
+            document.getElementById('word').innerText = "❌ 找不到单词数据\n请检查 data.js 文件";
+            return;
+        }
+        document.getElementById('word').innerText = localWords[currentIndex].word;
+        document.getElementById('meaning').innerText = localWords[currentIndex].meaning;
+        document.getElementById('meaning').style.display = 'none'; 
+    }
+
+    function showMeaning() {
+        if(localWords.length > 0) {
+            document.getElementById('meaning').style.display = 'block';
+        }
+    }
+
+    function nextWord() {
+        if(localWords.length > 0) {
+            currentIndex = (currentIndex + 1) % localWords.length;
+            renderCard();
+        }
+    }
+
+    // 初始化改用智能自适应函数
+    window.onload = initData;
   </script>
 </body>
 </html>

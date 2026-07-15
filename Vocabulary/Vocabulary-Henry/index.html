@@ -164,6 +164,59 @@
         renderRootCard();
         initRootTestCard();
     }
+        function renderCard() {
+        if (!localWords || localWords.length === 0) {
+            document.getElementById('word').innerText = "❌ 找不到单词数据\n请检查 data.js 文件";
+            return;
+        }
+        document.getElementById('word').innerText = localWords[currentIndex].word;
+        document.getElementById('meaning').innerText = localWords[currentIndex].meaning;
+        document.getElementById('meaning').style.display = 'none'; 
+    }
+
+    function showMeaning() {
+        if(localWords.length > 0) {
+            document.getElementById('meaning').style.display = 'block';
+        }
+    }
+
+    function nextWord() {
+        if(localWords.length > 0) {
+            currentIndex = (currentIndex + 1) % localWords.length;
+            renderCard();
+        }
+    }
+
+    function initTestCard() {
+        if (!localWords || localWords.length === 0) return;
+        isAnswerSubmitted = false;
+        document.getElementById('test-feedback').innerText = "";
+        document.getElementById('test-feedback').style.color = "";
+        document.getElementById('test-next-btn').innerText = "Submit (确认答案)";
+        
+        let currentWord = localWords[testIndex];
+        document.getElementById('test-word').innerText = currentWord.word;
+        
+        let pool = localWords.map(w => w.meaning).filter(m => m !== currentWord.meaning);
+        pool = pool.concat(fallbackMeanings);
+        pool.sort(() => 0.5 - Math.random());
+        
+        let choices = pool.slice(0, 5);
+        choices.push(currentWord.meaning);
+        choices.sort(() => 0.5 - Math.random());
+        currentOptions = choices;
+        
+        let container = document.getElementById('options-container');
+        container.innerHTML = "";
+        choices.forEach((meaning, idx) => {
+            container.innerHTML += `
+                <label class="option-item">
+                    <input type="radio" name="henry-option" value="${meaning}">
+                    ${idx + 1}. ${meaning}
+                </label>
+            `;
+        });
+    }
 
     function submitOrNextTest() {
         if (!localWords || localWords.length === 0) return;

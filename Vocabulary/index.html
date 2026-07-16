@@ -2,65 +2,108 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Henry W. Chang – Vocabulary Hub</title>
+  <title>Henry W. Chang – Secure Auth Gateway</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7f7f7; color: #222; line-height: 1.6; }
-    header { background: #1e293b; color: #f9fafb; padding: 20px 40px; }
-    header h1 { margin: 0; font-size: 28px; }
-    header p { margin: 4px 0 0 0; font-size: 14px; opacity: 0.9; }
-    nav { background: #0f172a; padding: 8px 40px; }
-    nav a { color: #e5e7eb; margin-right: 16px; text-decoration: none; font-size: 14px; }
-    nav a:hover { text-decoration: underline; }
-    .container { max-width: 960px; margin: 24px auto 40px auto; padding: 0 16px; }
-    section { background: #ffffff; border-radius: 8px; padding: 30px 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08); }
-    section h2 { margin-top: 0; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; font-size: 20px; }
-    ul { padding-left: 18px; }
-    li { margin-bottom: 12px; }
-    footer { text-align: center; font-size: 12px; color: #6b7280; padding: 20px 0 30px 0; }
-    .tag { display: inline-block; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 999px; font-size: 11px; margin-left: 4px; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f172a; color: #f8fafc; line-height: 1.6; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    .auth-card { background: #1e293b; color: #f8fafc; padding: 40px 30px; border-radius: 8px; width: 340px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); text-align: center; border: 1px solid #334155; }
+    h1 { font-size: 24px; margin-bottom: 8px; font-weight: 700; color: #f8fafc; letter-spacing: 1px; }
+    p { font-size: 13px; color: #94a3b8; margin: 0 0 24px 0; }
+    .auth-input { width: calc(100% - 22px); padding: 11px; margin: 8px 0; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; font-size: 14px; transition: border 0.2s; }
+    .auth-input:focus { outline: none; border-color: #3b82f6; }
+    .auth-btn { background: #10b981; color: white; border: none; padding: 11px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; width: 100%; margin-top: 12px; transition: background 0.2s; }
+    .auth-btn:hover { background: #059669; }
+    .switch-btn { background: transparent; border: none; color: #94a3b8; text-decoration: underline; cursor: pointer; font-size: 12px; margin-top: 16px; }
+    .switch-btn:hover { color: #f8fafc; }
+    /* ⏳ 加载中状态遮罩 */
+    .loading-mask { position: fixed; top:0; left:0; width:100%; height:100%; background: #0f172a; display: flex; justify-content: center; align-items: center; font-size: 18px; font-weight: bold; z-index: 9999; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Henry W. Chang</h1>
-    <p>Personal academic homepage – notes, experiments, and ideas.</p>
-  </header>
 
-  <nav>
-    <a href="../">← Back to Home (返回主页)</a>
-    <a href="#hub">Vocabulary Hub</a>
-  </nav>
-
-  <div class="container">
-    <section id="hub">
-      <h2>📚 Vocabulary Hub</h2>
-      <p style="color: #555;">Please select the vocabulary module you wnat to review:</p>
-      <ul>
-        <li>
-          <strong><a href="./Vocabulary-Reading/" style="color: #0284c7; text-decoration: none; font-size: 18px;">Reading Words</a></strong>
-          <span class="tag">Reading</span><br />
-          These words require accurate understanding of their meanings.
-        </li>
-        <li>
-          <strong><a href="./Vocabulary-Writing/" style="color: #0284c7; text-decoration: none; font-size: 18px;">Writing Words</a></strong>
-          <span class="tag">Writing</span><br />
-          You are required to spell these words correctly.
-        </li>
-        <li>
-          <strong><a href="./Vocabulary-Henry/" style="color: #0284c7; text-decoration: none; font-size: 18px;">Vocabulary Henry</a></strong>
-          <span class="tag">Myself</span><br />
-          This vocabulary resource uses a method currently unavailable elsewhere on the market.
-        </li>
-      </ul>
-    </section>
+  <!-- ⏳ 自动登录检测遮罩 -->
+  <div id="loading-mask" class="loading-mask">
+    📡 Loading Secure Authentication...
   </div>
 
-  <footer>
-    &copy; <span id="year"></span> Henry W. Chang. All rights reserved.
-  </footer>
+  <div class="auth-card">
+    <h1 id="auth-title">🔓 Henry's Hub</h1>
+    <p id="auth-subtitle">Login to unlock your customized vocabulary center.</p>
+    
+    <input type="email" id="auth-email" class="auth-input" placeholder="Email Address" required />
+    <input type="password" id="auth-password" class="auth-input" placeholder="Password" required />
+    
+    <button id="auth-submit-btn" class="auth-btn" onclick="handleAuthSubmit()">Sign In (登录)</button>
+    <button class="switch-btn" id="switch-btn" onclick="toggleAuthMode()">No account? Switch to Sign Up</button>
+  </div>
+
+  <!-- 🧬 引入连接 Supabase 的官方核心工具包 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
+    // ==========================================
+    // ⚡ Supabase 门禁连接配置
+    // ==========================================
+    const SUPABASE_URL = 'https://zjsdkyvjirrurehahpac.supabase.co'; 
+    const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY'; // 👈 【Henry 注意：替换为你的 anon key ！】
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let isRegisterMode = false;
+
+    // 1. 自动检测：如果检测到以前登录过，直接放行送去大厅 (hub.html)！
+    async function checkExistingSession() {
+        try {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (user) {
+                console.log("检测到已登录用户:", user.email, "正在自动前往大厅...");
+                window.location.href = './hub.html'; 
+            } else {
+                document.getElementById('loading-mask').style.display = 'none';
+            }
+        } catch (e) {
+            document.getElementById('loading-mask').style.display = 'none';
+        }
+    }
+
+    // 2. 切换 登录 ⇄ 注册 模式
+    function toggleAuthMode() {
+        isRegisterMode = !isRegisterMode;
+        document.getElementById('auth-title').innerText = isRegisterMode ? '📝 Create Account' : "🔓 Henry's Hub";
+        document.getElementById('auth-subtitle').innerText = isRegisterMode ? 'Sign up to start saving your error books.' : 'Login to unlock your customized vocabulary center.';
+        document.getElementById('auth-submit-btn').innerText = isRegisterMode ? 'Sign Up (注册)' : 'Sign In (登录)';
+        document.getElementById('auth-submit-btn').style.background = isRegisterMode ? '#3b82f6' : '#10b981';
+        document.getElementById('switch-btn').innerText = isRegisterMode ? 'Already have an account? Sign In' : 'No account? Switch to Sign Up';
+    }
+
+    // 3. 处理登录或注册请求
+    async function handleAuthSubmit() {
+        const email = document.getElementById('auth-email').value.trim();
+        const password = document.getElementById('auth-password').value;
+
+        if (!email || !password) {
+            alert("⚠️ Please fill in all fields!");
+            return;
+        }
+
+        try {
+            if (isRegisterMode) {
+                // 向 Supabase 发起注册
+                const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                if (error) throw error;
+                alert("🎉 Registration successful! Redirecting to hub...");
+                window.location.href = './hub.html';
+            } else {
+                // 向 Supabase 验证登录
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                window.location.href = './hub.html';
+            }
+        } catch (error) {
+            alert("❌ Auth Error: " + error.message);
+        }
+    }
+
+    window.onload = checkExistingSession;
   </script>
 </body>
 </html>

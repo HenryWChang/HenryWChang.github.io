@@ -48,3 +48,28 @@ const henryRootFallbackWords = [
 const henryRootData = (typeof henryRootCustomWords !== 'undefined' && henryRootCustomWords.length > 0) 
     ? henryRootCustomWords 
     : henryRootFallbackWords;
+
+// ==========================================
+// 📦 C 轨：Prefix Words 词库 (✨本次新增)
+// ==========================================
+// 轨 1 🎯【Henry专属Prefix前缀接入端】
+const henryPrefixCustomWords = [
+    {"word": "anti-", "meaning": "pref. 反对，相反 (例如: antisocial, antibody)"},
+    {"word": "mis-", "meaning": "pref. 错误，坏 (例如: misunderstand, mislead)"},
+    {"word": "re-", "meaning": "pref. 再次，回 (例如: rewrite, return)"}
+];
+
+// 轨 2 🚨【Henry专属Prefix前缀保险丝】
+const henryPrefixFallbackWords = [
+    {"word": "de-", "meaning": "pref. 向下，减少 (例如: decrease, devalue)（Prefix范例）"},
+    {"word": "inter-", "meaning": "pref. 在...之间 (例如: international, interview)（Prefix范例）"},
+    {"word": "pre-", "meaning": "pref. 在...之前 (role: preheat, preview)（Prefix范例）"},
+    {"word": "sub-", "meaning": "pref. 在...之下 (例如: subway, submarine)（Prefix范例）"},
+    {"word": "un-", "meaning": "pref. 不，相反 (例如: unhappy, unlock)（Prefix范例）"},
+    {"word": "pro-", "meaning": "pref. 向前，赞同 (例如: progress, promote)（Prefix范例）"}
+];
+
+// 🎛️ Prefix 融合开关：输出专属变量 "henryPrefixData" 给展示端网页精准抓取
+const henryPrefixData = (typeof henryPrefixCustomWords !== 'undefined' && henryPrefixCustomWords.length > 0) 
+    ? henryPrefixCustomWords 
+    : henryPrefixFallbackWords;

@@ -4,7 +4,7 @@
 
 // 1. 初始化你的 Supabase 客户端配置
 const SUPABASE_URL = 'https://zjsdkyvjirrurehahpac.supabase.co'; 
-const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY'; // 👈 记得把这里换成你的 anon key 密钥
+const SUPABASE_KEY = 'sb_publishable_6JSMsFOcoVVPpvVjzktC_w_S0FUKaeN'; // 👈 记得把这里换成你的 anon key 密钥
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // 2. 声明给 index.html 使用的 5 大核心全局数据通道

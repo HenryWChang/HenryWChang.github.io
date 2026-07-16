@@ -24,6 +24,19 @@
     .auth-bar { background: #0f172a; color: #e5e7eb; padding: 10px 40px; text-align: right; font-size: 13px; border-bottom: 1px solid #1e293b; display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
     .logout-btn { background: #ef4444; color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; }
     .logout-btn:hover { background: #dc2626; }
+
+    /* 🎨 新增：资料编辑按钮样式 */
+    .profile-btn { 
+      background: #475569; /* 深灰色调，与原有风格匹配 */
+      color: white; 
+      padding: 4px 12px; 
+      border-radius: 4px; 
+      text-decoration: none; 
+      font-size: 12px; 
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .profile-btn:hover { background: #334155; }
     
     /* 🔒 加载中状态遮罩 */
     .loading-mask { position: fixed; top:0; left:0; width:100%; height:100%; background: #0f172a; display: flex; justify-content: center; align-items: center; color: white; font-size: 18px; font-weight: bold; z-index: 9999; }
@@ -39,6 +52,8 @@
   <!-- 📧 用户状态控制条 -->
   <div class="auth-bar">
     <span id="user-display">📧 Checking User Account...</span>
+    <!-- 👈 新增：跳转至用户信息编辑页 -->
+    <a href="./Profile/index.html" class="profile-btn">Edit Profile</a>
     <button class="logout-btn" onclick="handleSignOut()">退出登录</button>
   </div>
 

@@ -100,10 +100,34 @@ const henrySuffixData = (typeof henrySuffixCustomWords !== 'undefined' && henryS
     : henrySuffixFallbackWords;
 
 // ==========================================
-// 📦 E 轨：Expand Words 超级词库 (✨本次复杂新增)
+// 📦 E 轨：Expand Words 超级词库 (✨关联对比增强版)
 // ==========================================
 // 轨 1 🎯【Henry专属Expand六要素接入端】
 const henryExpandCustomWords = [
+    {
+        "word": "contradiction",
+        "meaning": "n. 矛盾，反驳",
+        "basic": "none",
+        "root": "dict-",
+        "prefix": "contra-", // 修正为学术正确的 contra- 前缀
+        "suffix": "-tion/-sion",
+        "root_m": "pref. 言，说 (例如: contradict, predict)",
+        "prefix_m": "pref. 反对，相反，相对 (例如: contradict, contrary)",
+        "suffix_m": "suff. 动作，状态 (例如: education, decision)（Suffix范例）",
+        "group": "opposition-logic" // 👈 组 1：反对与相反逻辑
+    },
+    {
+        "word": "antisocial",
+        "meaning": "adj. 反社会的",
+        "basic": "social",
+        "root": "none",
+        "prefix": "anti-", 
+        "suffix": "-al",
+        "root_m": "none",
+        "prefix_m": "pref. 反对，相反 (例如: antisocial, antibody)",
+        "suffix_m": "suff. 具有...性质的 (例如: cultural, logical)",
+        "group": "opposition-logic" // 👈 组 1：与 contradiction 强行绑定，连续出现！
+    },
     {
         "word": "biodegradable",
         "meaning": "adj. 可生物降解的",
@@ -111,21 +135,10 @@ const henryExpandCustomWords = [
         "root": "bio-",
         "prefix": "de-",
         "suffix": "-able/-ible",
-        // 为了第二关提取各个组成部分的“独立释义干扰项”，附带各部分的明文释义
         "root_m": "pref. 生命，生物 (例如: biology, biography)",
         "prefix_m": "pref. 向下，减少 (例如: decrease, devalue)（Prefix范例）",
-        "suffix_m": "suff. 能够...的，易于...的 (例如: understandable, visible)"
-    },
-    {
-        "word": "contradiction",
-        "meaning": "n. 矛盾，反驳",
-        "basic": "none",
-        "root": "dict-",
-        "prefix": "anti-", 
-        "suffix": "-tion/-sion",
-        "root_m": "pref. 言，说 (例如: contradict, predict)",
-        "prefix_m": "pref. 反对，相反 (例如: antisocial, antibody)",
-        "suffix_m": "suff. 动作，状态 (例如: education, decision)（Suffix范例）"
+        "suffix_m": "suff. 能够...的，易于...的 (例如: understandable, visible)",
+        "group": "bio-process" // 👈 组 2：生物化学过程逻辑
     }
 ];
 
@@ -140,7 +153,8 @@ const henryExpandFallbackWords = [
         "suffix": "-able/-ible",
         "root_m": "pref. 言，说 (例如: contradict, predict)",
         "prefix_m": "pref. 在...之前 (role: preheat, preview)（Prefix范例）",
-        "suffix_m": "suff. 能够...的，易于...的 (例如: understandable, visible)"
+        "suffix_m": "suff. 能够...的，易于...的 (例如: understandable, visible)",
+        "group": "prediction-logic" // 👈 组 3
     }
 ];
 

@@ -302,11 +302,24 @@
             localSuffixWords = window.henrySuffixData;
         }
 
-        // 🎯 纯粹链接端E：精准链接 Expand 词库 (✨本次新增)
+        // 🎯 纯粹链接端E：精准链接 Expand 词库并按 group 属性强关联重新排序
+        let rawExpand = [];
         if (typeof henryExpandData !== 'undefined') {
-            localExpandWords = henryExpandData;
+            rawExpand = henryExpandData;
         } else if (typeof window.henryExpandData !== 'undefined') {
-            localExpandWords = window.henryExpandData;
+            rawExpand = window.henryExpandData;
+        }
+
+        // 🧠 核心算法升级：按 group 值对单词数组进行聚类重排
+        // 从而确保 group 相同的单词在“背单词”和“测试”中绝对紧密相连、成组连续出现
+        if (rawExpand && rawExpand.length > 0) {
+            localExpandWords = [...rawExpand].sort((a, b) => {
+                let gA = a.group || "";
+                let gB = b.group || "";
+                return gA.localeCompare(gB);
+            });
+        } else {
+            localExpandWords = [];
         }
       
         // 联动渲染 Basic 板块
@@ -739,14 +752,14 @@
             document.getElementById('reading-step-badge').innerText = "Stage 1: Components Check (多选题)";
             document.getElementById('reading-question-text').innerText = "Please select ALL components that form this word:";
             
-            // 1. 收集当前单词正确的、非 "none" 的真实构件
+            // 1. 动态获取当前单词所有正确的、非 "none" 的真实构成构件
             let expected = [];
             if (currentItem.basic !== "none") expected.push(currentItem.basic);
             if (currentItem.root !== "none") expected.push(currentItem.root);
             if (currentItem.prefix !== "none") expected.push(currentItem.prefix);
             if (currentItem.suffix !== "none") expected.push(currentItem.suffix);
 
-            // 2. 收集干扰项：从整个词库的非 "none" 构件中动态获取
+            // 2. 动态收集干扰项池
             let distractorPool = [];
             localExpandWords.forEach(w => {
                 if (w.basic !== "none") distractorPool.push(w.basic);
@@ -754,22 +767,22 @@
                 if (w.prefix !== "none") distractorPool.push(w.prefix);
                 if (w.suffix !== "none") distractorPool.push(w.suffix);
             });
-            // 附带一些高频常见词缀充实干扰池，防止词库太小不够凑数
+            // 保证干扰项充足
             distractorPool = distractorPool.concat(["-ly", "con-", "trans-", "sub-", "im-", "un-", "-tion", "-ment", "pre-", "-able"]);
             
-            // 去重并排除掉当前词的正确构件
+            // 剔除重复项以及当前词本身的正确构件
             distractorPool = [...new Set(distractorPool)].filter(item => !expected.includes(item));
 
-            // 随机洗牌干扰池，切出足够补满 6 个选项的干扰项
+            // 打乱顺序，截取补充项以拼满 6 个选项
             distractorPool.sort(() => 0.5 - Math.random());
             let neededDistractors = 6 - expected.length;
             let chosenDistractors = distractorPool.slice(0, neededDistractors);
 
-            // 3. 将正确答案与干扰项合并，重新随机打乱顺序
+            // 3. 正确构件与干扰项混合，进行大洗牌
             let choices = expected.concat(chosenDistractors);
             choices.sort(() => 0.5 - Math.random());
 
-            // 4. 生成多选按钮
+            // 4. 渲染到前端
             container.innerHTML = "";
             choices.forEach(val => {
                 container.innerHTML += `
@@ -840,17 +853,15 @@
             isReadingSubmitted = true;
             
             if (currentReadingStage === 1) {
-                // 获取用户勾选的具体构件值 (例如: ["bio-", "de-"])
                 let checked = Array.from(document.querySelectorAll('input[name="stage1-option"]:checked')).map(el => el.value);
                 
-                // 动态提取该单词期待的正确构件值
                 let expected = [];
                 if (currentItem.basic !== "none") expected.push(currentItem.basic);
                 if (currentItem.root !== "none") expected.push(currentItem.root);
                 if (currentItem.prefix !== "none") expected.push(currentItem.prefix);
                 if (currentItem.suffix !== "none") expected.push(currentItem.suffix);
 
-                // 全等判定（数量一致且无错选、无漏选）
+                // 判断是否完全勾选了正确的构件，且没有多选或少选
                 let isCorrect = checked.length === expected.length && checked.every(v => expected.includes(v));
                 if (isCorrect) {
                     feedbackEl.innerText = "🎉 Stage 1 Passed! Jump to Stage 2.";
@@ -859,7 +870,7 @@
                 } else {
                     feedbackEl.innerText = "❌ Incorrect components checked! Try Stage 1 again.";
                     feedbackEl.style.color = "#dc2626";
-                    currentReadingStage = 1; // 惩罚重做第一关
+                    currentReadingStage = 1;
                 }
             } 
             else if (currentReadingStage === 2) {

@@ -70,6 +70,7 @@
     }
   }
 
+  // 动态字段渲染 (补全了所有选项)
   function renderDynamicFields(saved = {}) {
     const status = document.getElementById('status').value;
     const container = document.getElementById('dynamic-fields');
@@ -78,7 +79,7 @@
     if (status === 'Student') {
       container.innerHTML = `
         <label>Stage</label>
-        <select id="stage" onchange="renderMajor('${saved.major || ''}')">
+        <select id="stage" onchange="renderMajor('')">
           <option value="">-- Please Select --</option>
           <option ${saved.stage=='Primary'?'selected':''}>Primary</option>
           <option ${saved.stage=='Secondary'?'selected':''}>Secondary</option>
@@ -91,26 +92,47 @@
     } else {
       container.innerHTML = `
         <label>Occupation</label>
-        <select id="occupation"><option value="">-- Please Select --</option>
+        <select id="occupation">
+          <option value="">-- Please Select --</option>
+          <option ${saved.occupation=='Armed Forces Occupations'?'selected':''}>Armed Forces Occupations</option>
           <option ${saved.occupation=='Managers'?'selected':''}>Managers</option>
           <option ${saved.occupation=='Professionals'?'selected':''}>Professionals</option>
           <option ${saved.occupation=='Technicians and Associate Professionals'?'selected':''}>Technicians and Associate Professionals</option>
+          <option ${saved.occupation=='Clerical Support Workers'?'selected':''}>Clerical Support Workers</option>
+          <option ${saved.occupation=='Service and Sales Workers'?'selected':''}>Service and Sales Workers</option>
+          <option ${saved.occupation=='Skilled Agricultural, Forestry and Fishery Workers'?'selected':''}>Skilled Agricultural, Forestry and Fishery Workers</option>
+          <option ${saved.occupation=='Craft and Related Trades Workers'?'selected':''}>Craft and Related Trades Workers</option>
+          <option ${saved.occupation=='Plant and Machine Operators, and Assemblers'?'selected':''}>Plant and Machine Operators, and Assemblers</option>
+          <option ${saved.occupation=='Elementary Occupations'?'selected':''}>Elementary Occupations</option>
         </select>
         <label>Highest Degree</label>
-        <select id="degree"><option value="">-- Please Select --</option>
-          <option ${saved.degree=='Bachelor'?"selected":""}>Bachelor's</option>
-          <option ${saved.degree=='Master'?"selected":""}>Master's</option>
+        <select id="degree">
+          <option value="">-- Please Select --</option>
+          <option ${saved.degree=='Secondary or Below'?'selected':''}>Secondary or Below</option>
+          <option ${saved.degree=="Bachelor's"?'selected':''}>Bachelor's</option>
+          <option ${saved.degree=="Master's"?'selected':''}>Master's</option>
+          <option ${saved.degree=='Doctoral'?'selected':''}>Doctoral</option>
         </select>`;
     }
   }
 
+  // 单独处理 Major 选择 (补全了所有选项)
   function renderMajor(selectedMajor = "") {
     const stage = document.getElementById('stage').value;
     const wrap = document.getElementById('major-wrap');
     if (['Undergraduate', 'Postgraduate', 'Doctoral'].includes(stage)) {
-      wrap.innerHTML = `<label>Major</label><select id="major"><option value="">-- Please Select --</option>
+      wrap.innerHTML = `<label>Major</label><select id="major">
+        <option value="">-- Please Select --</option>
         <option ${selectedMajor=='Education'?'selected':''}>Education</option>
+        <option ${selectedMajor=='Arts and humanities'?'selected':''}>Arts and humanities</option>
+        <option ${selectedMajor=='Social Sciences, Journalism and Information'?'selected':''}>Social Sciences, Journalism and Information</option>
         <option ${selectedMajor=='Business, Administration and Law'?'selected':''}>Business, Administration and Law</option>
+        <option ${selectedMajor=='Natural Sciences, Mathematics and Statistics'?'selected':''}>Natural Sciences, Mathematics and Statistics</option>
+        <option ${selectedMajor=='Information and Communication Technologies (ICTs)'?'selected':''}>Information and Communication Technologies (ICTs)</option>
+        <option ${selectedMajor=='Engineering, Manufacturing and Construction'?'selected':''}>Engineering, Manufacturing and Construction</option>
+        <option ${selectedMajor=='Agriculture, forestry, Fisheries and Veterinary'?'selected':''}>Agriculture, forestry, Fisheries and Veterinary</option>
+        <option ${selectedMajor=='Health and Welfare'?'selected':''}>Health and Welfare</option>
+        <option ${selectedMajor=='Services'?'selected':''}>Services</option>
         </select>`;
     } else { wrap.innerHTML = ''; }
   }

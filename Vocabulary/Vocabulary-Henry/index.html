@@ -46,6 +46,8 @@
     <a href="#root-test-section">Test The Root</a>
     <a href="#prefix-vocabulary">Know The Prefix</a> <!-- ⬇️ 新增这两行 -->
     <a href="#prefix-test-section">Test The Prefix</a>
+    <a href="#suffix-vocabulary">Know The Suffix</a> <!-- ⬇️ 新增这两行 -->
+    <a href="#suffix-test-section">Test The Suffix</a>
   </nav>
 
   <div class="container">
@@ -150,6 +152,37 @@
       </div>
     </section>
 
+      <!-- 🎯 新增：Know The Suffix 栏目 -->
+    <section id="suffix-vocabulary">
+      <h2>🎯 Know The Suffix</h2>
+      <div class="word-box">
+        <div id="suffix-word" class="word-title">Loading...</div>
+        <div id="suffix-meaning" class="word-meaning">Translation loading...</div>
+        <div class="btn-group">
+          <button class="secondary" onclick="showSuffixMeaning()">Show Meaning (看释义)</button>
+          <button onclick="nextSuffixWord()">Next Suffix (下一个)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ✍️ 新增：Test The Suffix 栏目 -->
+    <section id="suffix-test-section">
+      <h2>✍️ Test The Suffix</h2>
+      <div class="word-box">
+        <div id="suffix-test-word" class="word-title">Loading...</div>
+        
+        <!-- 6个后缀中文选项的容器 -->
+        <div id="suffix-options-container" class="options-group"></div>
+        
+        <!-- 对错提示区域 -->
+        <div id="suffix-test-feedback" class="feedback"></div>
+        
+        <div class="btn-group">
+          <button id="suffix-test-next-btn" onclick="submitOrNextSuffixTest()">Next (确认/下一个)</button>
+        </div>
+      </div>
+    </section>
+
   <footer>
     &copy; <span id="year"></span> Henry W. Chang. All rights reserved.
   </footer>
@@ -170,11 +203,20 @@
     let rootTestIndex = 0;
     let rootCurrentOptions = [];
     let isRootAnswerSubmitted = false;
+    
+    // 🧬 C轨：Prefix Words 变量声明
     let prefixCurrentIndex = 0;
     let localPrefixWords = [];
     let prefixTestIndex = 0;
     let prefixCurrentOptions = [];
     let isPrefixAnswerSubmitted = false;
+
+    // 🧬 D轨：Suffix Words 变量声明 (✨新增独立命名空间)
+    let suffixCurrentIndex = 0;
+    let localSuffixWords = [];
+    let suffixTestIndex = 0;
+    let suffixCurrentOptions = [];
+    let isSuffixAnswerSubmitted = false;
 
     // 随机假数据包
     const fallbackMeanings = ["n. 缺点，瑕疵", "v. 维持，保持", "adj. 明显的", "n. 复杂性", "v. 评估，估计", "n. 繁荣", "adj. 偶然的"];
@@ -200,6 +242,13 @@
         } else if (typeof window.henryPrefixData !== 'undefined') {
             localPrefixWords = window.henryPrefixData;
         }
+
+        // 🎯 纯粹链接端D：精准链接 Suffix 词库 (✨新增)
+        if (typeof henrySuffixData !== 'undefined') {
+            localSuffixWords = henrySuffixData;
+        } else if (typeof window.henrySuffixData !== 'undefined') {
+            localSuffixWords = window.henrySuffixData;
+        }
         
         // 联动渲染 Basic 板块
         renderCard();
@@ -212,6 +261,10 @@
         // 联动渲染 Prefix 板块 (✨新增)
         renderPrefixCard();
         initPrefixTestCard();
+
+        // 联动渲染 Surfix 模块
+        renderSuffixCard(); // (✨新增)
+        initSuffixTestCard(); // (✨新增)
     }
         function renderCard() {
         if (!localWords || localWords.length === 0) {
@@ -465,6 +518,93 @@
         } else {
             prefixTestIndex = (prefixTestIndex + 1) % localPrefixWords.length;
             initPrefixTestCard();
+        }
+    }
+
+    // ==========================================
+    // 🧠 新增：Know The Suffix 专属控制逻辑
+    // ==========================================
+    function renderSuffixCard() {
+        if (!localSuffixWords || localSuffixWords.length === 0) {
+            document.getElementById('suffix-word').innerText = "❌ 找不到后缀数据\n请检查 data.js 文件";
+            return;
+        }
+        document.getElementById('suffix-word').innerText = localSuffixWords[suffixCurrentIndex].word;
+        document.getElementById('suffix-meaning').innerText = localSuffixWords[suffixCurrentIndex].meaning;
+        document.getElementById('suffix-meaning').style.display = 'none'; 
+    }
+
+    function showSuffixMeaning() {
+        if(localSuffixWords.length > 0) {
+            document.getElementById('suffix-meaning').style.display = 'block';
+        }
+    }
+
+    function nextSuffixWord() {
+        if(localSuffixWords.length > 0) {
+            suffixCurrentIndex = (suffixCurrentIndex + 1) % localSuffixWords.length;
+            renderSuffixCard();
+        }
+    }
+
+    // ==========================================
+    // 🧠 新增：Test The Suffix 专属单选控制逻辑
+    // ==========================================
+    function initSuffixTestCard() {
+        if (!localSuffixWords || localSuffixWords.length === 0) return;
+        isSuffixAnswerSubmitted = false;
+        document.getElementById('suffix-test-feedback').innerText = "";
+        document.getElementById('suffix-test-feedback').style.color = "";
+        document.getElementById('suffix-test-next-btn').innerText = "Submit (确认答案)";
+        
+        let currentWord = localSuffixWords[suffixTestIndex];
+        document.getElementById('suffix-test-word').innerText = currentWord.word;
+        
+        let pool = localSuffixWords.map(w => w.meaning).filter(m => m !== currentWord.meaning);
+        pool = pool.concat(fallbackMeanings);
+        pool.sort(() => 0.5 - Math.random());
+        
+        let choices = pool.slice(0, 5);
+        choices.push(currentWord.meaning);
+        choices.sort(() => 0.5 - Math.random());
+        suffixCurrentOptions = choices;
+        
+        let container = document.getElementById('suffix-options-container');
+        container.innerHTML = "";
+        choices.forEach((meaning, idx) => {
+            container.innerHTML += `
+                <label class="option-item">
+                    <input type="radio" name="suffix-option" value="${meaning}">
+                    ${idx + 1}. ${meaning}
+                </label>
+            `;
+        });
+    }
+
+    function submitOrNextSuffixTest() {
+        if (!localSuffixWords || localSuffixWords.length === 0) return;
+        let currentWord = localSuffixWords[suffixTestIndex];
+        let feedbackEl = document.getElementById('suffix-test-feedback');
+        
+        if (!isSuffixAnswerSubmitted) {
+            let selected = document.querySelector('input[name="suffix-option"]:checked');
+            if (!selected) {
+                feedbackEl.innerText = "⚠️ 请先选择一个答案！";
+                feedbackEl.style.color = "#eab308";
+                return;
+            }
+            isSuffixAnswerSubmitted = true;
+            if (selected.value === currentWord.meaning) {
+                feedbackEl.innerText = "✅ 正确！太棒了。";
+                feedbackEl.style.color = "#16a34a";
+            } else {
+                feedbackEl.innerText = `❌ 错误！正确答案是：${currentWord.meaning}`;
+                feedbackEl.style.color = "#dc2626";
+            }
+            document.getElementById('suffix-test-next-btn').innerText = "Next Suffix (下一个)";
+        } else {
+            suffixTestIndex = (suffixTestIndex + 1) % localSuffixWords.length;
+            initSuffixTestCard();
         }
     }
     window.onload = initData;

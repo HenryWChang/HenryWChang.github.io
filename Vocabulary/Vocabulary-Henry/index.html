@@ -739,11 +739,42 @@
             document.getElementById('reading-step-badge').innerText = "Stage 1: Components Check (多选题)";
             document.getElementById('reading-question-text').innerText = "Please select ALL components that form this word:";
             
-            let allTypes = ["basic", "root", "prefix", "suffix", "infix", "circumfix"];
-            allTypes.forEach(type => {
+            // 1. 收集当前单词正确的、非 "none" 的真实构件
+            let expected = [];
+            if (currentItem.basic !== "none") expected.push(currentItem.basic);
+            if (currentItem.root !== "none") expected.push(currentItem.root);
+            if (currentItem.prefix !== "none") expected.push(currentItem.prefix);
+            if (currentItem.suffix !== "none") expected.push(currentItem.suffix);
+
+            // 2. 收集干扰项：从整个词库的非 "none" 构件中动态获取
+            let distractorPool = [];
+            localExpandWords.forEach(w => {
+                if (w.basic !== "none") distractorPool.push(w.basic);
+                if (w.root !== "none") distractorPool.push(w.root);
+                if (w.prefix !== "none") distractorPool.push(w.prefix);
+                if (w.suffix !== "none") distractorPool.push(w.suffix);
+            });
+            // 附带一些高频常见词缀充实干扰池，防止词库太小不够凑数
+            distractorPool = distractorPool.concat(["-ly", "con-", "trans-", "sub-", "im-", "un-", "-tion", "-ment", "pre-", "-able"]);
+            
+            // 去重并排除掉当前词的正确构件
+            distractorPool = [...new Set(distractorPool)].filter(item => !expected.includes(item));
+
+            // 随机洗牌干扰池，切出足够补满 6 个选项的干扰项
+            distractorPool.sort(() => 0.5 - Math.random());
+            let neededDistractors = 6 - expected.length;
+            let chosenDistractors = distractorPool.slice(0, neededDistractors);
+
+            // 3. 将正确答案与干扰项合并，重新随机打乱顺序
+            let choices = expected.concat(chosenDistractors);
+            choices.sort(() => 0.5 - Math.random());
+
+            // 4. 生成多选按钮
+            container.innerHTML = "";
+            choices.forEach(val => {
                 container.innerHTML += `
                     <label class="option-item">
-                        <input type="checkbox" name="stage1-option" value="${type}"> ${type.toUpperCase()}
+                        <input type="checkbox" name="stage1-option" value="${val}"> ${val}
                     </label>
                 `;
             });
@@ -809,22 +840,26 @@
             isReadingSubmitted = true;
             
             if (currentReadingStage === 1) {
+                // 获取用户勾选的具体构件值 (例如: ["bio-", "de-"])
                 let checked = Array.from(document.querySelectorAll('input[name="stage1-option"]:checked')).map(el => el.value);
+                
+                // 动态提取该单词期待的正确构件值
                 let expected = [];
-                if(currentItem.basic !== "none") expected.push("basic");
-                if(currentItem.root !== "none") expected.push("root");
-                if(currentItem.prefix !== "none") expected.push("prefix");
-                if(currentItem.suffix !== "none") expected.push("suffix");
+                if (currentItem.basic !== "none") expected.push(currentItem.basic);
+                if (currentItem.root !== "none") expected.push(currentItem.root);
+                if (currentItem.prefix !== "none") expected.push(currentItem.prefix);
+                if (currentItem.suffix !== "none") expected.push(currentItem.suffix);
 
+                // 全等判定（数量一致且无错选、无漏选）
                 let isCorrect = checked.length === expected.length && checked.every(v => expected.includes(v));
                 if (isCorrect) {
                     feedbackEl.innerText = "🎉 Stage 1 Passed! Jump to Stage 2.";
                     feedbackEl.style.color = "#16a34a";
                     currentReadingStage = 2;
                 } else {
-                    feedbackEl.innerText = "❌ Incorrect structure components! Try Stage 1 again.";
+                    feedbackEl.innerText = "❌ Incorrect components checked! Try Stage 1 again.";
                     feedbackEl.style.color = "#dc2626";
-                    currentReadingStage = 1;
+                    currentReadingStage = 1; // 惩罚重做第一关
                 }
             } 
             else if (currentReadingStage === 2) {

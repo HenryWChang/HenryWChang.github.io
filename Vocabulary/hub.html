@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Henry W. Chang – Vocabulary Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7f7f7; color: #222; line-height: 1.6; }
+    header { background: #1e293b; color: #f9fafb; padding: 20px 40px; }
+    header h1 { margin: 0; font-size: 28px; }
+    header p { margin: 4px 0 0 0; font-size: 14px; opacity: 0.9; }
+    nav { background: #0f172a; padding: 8px 40px; }
+    nav a { color: #e5e7eb; margin-right: 16px; text-decoration: none; font-size: 14px; }
+    nav a:hover { text-decoration: underline; }
+    .container { max-width: 960px; margin: 24px auto 40px auto; padding: 0 16px; }
+    section { background: #ffffff; border-radius: 8px; padding: 30px 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08); }
+    section h2 { margin-top: 0; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; font-size: 20px; }
+    ul { padding-left: 18px; }
+    li { margin-bottom: 12px; }
+    footer { text-align: center; font-size: 12px; color: #6b7280; padding: 20px 0 30px 0; }
+    .tag { display: inline-block; background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 999px; font-size: 11px; margin-left: 4px; }
+    
+    /* 🎨 用户状态栏和登出按钮 */
+    .auth-bar { background: #0f172a; color: #e5e7eb; padding: 10px 40px; text-align: right; font-size: 13px; border-bottom: 1px solid #1e293b; display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
+    .logout-btn { background: #ef4444; color: white; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500; }
+    .logout-btn:hover { background: #dc2626; }
+    
+    /* 🔒 加载中状态遮罩 */
+    .loading-mask { position: fixed; top:0; left:0; width:100%; height:100%; background: #0f172a; display: flex; justify-content: center; align-items: center; color: white; font-size: 18px; font-weight: bold; z-index: 9999; }
+  </style>
+</head>
+<body>
+
+  <!-- 🔒 安全拦截遮罩 -->
+  <div id="secure-mask" class="loading-mask">
+    🔒 Verifying access credentials...
+  </div>
+
+  <!-- 📧 用户状态控制条 -->
+  <div class="auth-bar">
+    <span id="user-display">📧 Checking User Account...</span>
+    <button class="logout-btn" onclick="handleSignOut()">退出登录</button>
+  </div>
+
+  <header>
+    <h1>Henry W. Chang</h1>
+    <p>Personal academic homepage – notes, experiments, and ideas.</p>
+  </header>
+
+  <nav>
+    <a href="../">← Back to Home (返回主页)</a>
+    <a href="#hub">Vocabulary Hub</a>
+  </nav>
+
+  <div class="container">
+    <section id="hub">
+      <h2>📚 Vocabulary Hub</h2>
+      <p style="color: #555;">Please select the vocabulary module you want to review:</p>
+      <ul>
+        <li>
+          <strong><a href="./Vocabulary-Reading/" style="color: #0284c7; text-decoration: none; font-size: 18px;">Reading Words</a></strong>
+          <span class="tag">Reading</span><br />
+          These words require accurate understanding of their meanings.
+        </li>
+        <li>
+          <strong><a href="./Vocabulary-Writing/" style="color: #0284c7; text-decoration: none; font-size: 18px;">Writing Words</a></strong>
+          <span class="tag">Writing</span><br />
+          You are required to spell these words correctly.
+        </li>
+        <li>
+          <strong><a href="./Vocabulary-Henry/" style="color: #0284c7; text-decoration: none; font-size: 18px;">Vocabulary Henry</a></strong>
+          <span class="tag">Myself</span><br />
+          This vocabulary resource uses a method currently unavailable elsewhere on the market.
+        </li>
+      </ul>
+    </section>
+  </div>
+
+  <footer>
+    &copy; <span id="year"></span> Henry W. Chang. All rights reserved.
+  </footer>
+
+  <!-- 🧬 引入连接 Supabase 的官方核心工具包 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // ==========================================
+    // ⚡ Supabase 大厅安全验证配置
+    // ==========================================
+    const SUPABASE_URL = 'https://zjsdkyvjirrurehahpac.supabase.co'; 
+    const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY'; // 👈 【Henry 注意：替换为你的 anon key ！】
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // 1. 安全拦截：如果没有登录凭证，立刻弹回登录页 index.html！
+    async function verifyUserAccess() {
+        try {
+            const { data: { user }, error } = await supabaseClient.auth.getUser();
+            if (error || !user) {
+                console.warn("未检测到登录凭证，重定向至登录门禁...");
+                window.location.href = './index.html'; 
+            } else {
+                // 校验成功，展示用户名并关闭加载遮罩
+                document.getElementById('user-display').innerText = `👋 欢迎回来，${user.email}`;
+                document.getElementById('secure-mask').style.display = 'none'; 
+            }
+        } catch (e) {
+            window.location.href = './index.html';
+        }
+    }
+
+    // 2. 处理退出登录
+    async function handleSignOut() {
+        try {
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) throw error;
+            alert("🚪 安全登出，正在返回登录页...");
+            window.location.href = './index.html';
+        } catch (error) {
+            alert("❌ 登出失败: " + error.message);
+        }
+    }
+
+    window.onload = verifyUserAccess;
+  </script>
+</body>
+</html>

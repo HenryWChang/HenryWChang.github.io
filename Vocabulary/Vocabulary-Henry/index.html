@@ -44,6 +44,8 @@
     <a href="#test-section">Test Basic Words</a>
     <a href="#root-vocabulary">Know The Root</a> <!-- ⬇️ 新增这两行 -->
     <a href="#root-test-section">Test The Root</a>
+    <a href="#prefix-vocabulary">Know The Prefix</a> <!-- ⬇️ 新增这两行 -->
+    <a href="#prefix-test-section">Test The Prefix</a>
   </nav>
 
   <div class="container">
@@ -117,6 +119,37 @@
       </div>
     </section>
 
+        <!-- 🎯 新增：Know The Prefix 栏目 -->
+    <section id="prefix-vocabulary">
+      <h2>🎯 Know The Prefix</h2>
+      <div class="word-box">
+        <div id="prefix-word" class="word-title">Loading...</div>
+        <div id="prefix-meaning" class="word-meaning">Translation loading...</div>
+        <div class="btn-group">
+          <button class="secondary" onclick="showPrefixMeaning()">Show Meaning (看释义)</button>
+          <button onclick="nextPrefixWord()">Next Prefix (下一个)</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ✍️ 新增：Test The Prefix 栏目 -->
+    <section id="prefix-test-section">
+      <h2>✍️ Test The Prefix</h2>
+      <div class="word-box">
+        <div id="prefix-test-word" class="word-title">Loading...</div>
+        
+        <!-- 6个前缀中文选项的容器 -->
+        <div id="prefix-options-container" class="options-group"></div>
+        
+        <!-- 对错提示区域 -->
+        <div id="prefix-test-feedback" class="feedback"></div>
+        
+        <div class="btn-group">
+          <button id="prefix-test-next-btn" onclick="submitOrNextPrefixTest()">Next (确认/下一个)</button>
+        </div>
+      </div>
+    </section>
+
   <footer>
     &copy; <span id="year"></span> Henry W. Chang. All rights reserved.
   </footer>
@@ -137,6 +170,11 @@
     let rootTestIndex = 0;
     let rootCurrentOptions = [];
     let isRootAnswerSubmitted = false;
+    let prefixCurrentIndex = 0;
+    let localPrefixWords = [];
+    let prefixTestIndex = 0;
+    let prefixCurrentOptions = [];
+    let isPrefixAnswerSubmitted = false;
 
     // 随机假数据包
     const fallbackMeanings = ["n. 缺点，瑕疵", "v. 维持，保持", "adj. 明显的", "n. 复杂性", "v. 评估，估计", "n. 繁荣", "adj. 偶然的"];
@@ -155,6 +193,13 @@
         } else if (typeof window.henryRootData !== 'undefined') {
             localRootWords = window.henryRootData;
         }
+
+        // 🎯 纯粹链接端C：精准链接 Prefix 词库 (✨新增)
+        if (typeof henryPrefixData !== 'undefined') {
+            localPrefixWords = henryPrefixData;
+        } else if (typeof window.henryPrefixData !== 'undefined') {
+            localPrefixWords = window.henryPrefixData;
+        }
         
         // 联动渲染 Basic 板块
         renderCard();
@@ -163,6 +208,10 @@
         // 联动渲染 Root 板块 (✨新增)
         renderRootCard();
         initRootTestCard();
+
+        // 联动渲染 Prefix 板块 (✨新增)
+        renderPrefixCard();
+        initPrefixTestCard();
     }
         function renderCard() {
         if (!localWords || localWords.length === 0) {
@@ -332,6 +381,92 @@
         }
     }
     // 绑定自适应加载
+    // ==========================================
+    // 🧠 新增：Know The Prefix 专属控制逻辑
+    // ==========================================
+    function renderPrefixCard() {
+        if (!localPrefixWords || localPrefixWords.length === 0) {
+            document.getElementById('prefix-word').innerText = "❌ 找不到前缀数据\n请检查 data.js 文件";
+            return;
+        }
+        document.getElementById('prefix-word').innerText = localPrefixWords[prefixCurrentIndex].word;
+        document.getElementById('prefix-meaning').innerText = localPrefixWords[prefixCurrentIndex].meaning;
+        document.getElementById('prefix-meaning').style.display = 'none'; 
+    }
+
+    function showPrefixMeaning() {
+        if(localPrefixWords.length > 0) {
+            document.getElementById('prefix-meaning').style.display = 'block';
+        }
+    }
+
+    function nextPrefixWord() {
+        if(localPrefixWords.length > 0) {
+            prefixCurrentIndex = (prefixCurrentIndex + 1) % localPrefixWords.length;
+            renderPrefixCard();
+        }
+    }
+
+    // ==========================================
+    // 🧠 新增：Test The Prefix 专属单选控制逻辑
+    // ==========================================
+    function initPrefixTestCard() {
+        if (!localPrefixWords || localPrefixWords.length === 0) return;
+        isPrefixAnswerSubmitted = false;
+        document.getElementById('prefix-test-feedback').innerText = "";
+        document.getElementById('prefix-test-feedback').style.color = "";
+        document.getElementById('prefix-test-next-btn').innerText = "Submit (确认答案)";
+        
+        let currentWord = localPrefixWords[prefixTestIndex];
+        document.getElementById('prefix-test-word').innerText = currentWord.word;
+        
+        let pool = localPrefixWords.map(w => w.meaning).filter(m => m !== currentWord.meaning);
+        pool = pool.concat(fallbackMeanings);
+        pool.sort(() => 0.5 - Math.random());
+        
+        let choices = pool.slice(0, 5);
+        choices.push(currentWord.meaning);
+        choices.sort(() => 0.5 - Math.random());
+        prefixCurrentOptions = choices;
+        
+        let container = document.getElementById('prefix-options-container');
+        container.innerHTML = "";
+        choices.forEach((meaning, idx) => {
+            container.innerHTML += `
+                <label class="option-item">
+                    <input type="radio" name="prefix-option" value="${meaning}">
+                    ${idx + 1}. ${meaning}
+                </label>
+            `;
+        });
+    }
+
+    function submitOrNextPrefixTest() {
+        if (!localPrefixWords || localPrefixWords.length === 0) return;
+        let currentWord = localPrefixWords[prefixTestIndex];
+        let feedbackEl = document.getElementById('prefix-test-feedback');
+        
+        if (!isPrefixAnswerSubmitted) {
+            let selected = document.querySelector('input[name="prefix-option"]:checked');
+            if (!selected) {
+                feedbackEl.innerText = "⚠️ 请先选择一个答案！";
+                feedbackEl.style.color = "#eab308";
+                return;
+            }
+            isPrefixAnswerSubmitted = true;
+            if (selected.value === currentWord.meaning) {
+                feedbackEl.innerText = "✅ 正确！太棒了。";
+                feedbackEl.style.color = "#16a34a";
+            } else {
+                feedbackEl.innerText = `❌ 错误！正确答案是：${currentWord.meaning}`;
+                feedbackEl.style.color = "#dc2626";
+            }
+            document.getElementById('prefix-test-next-btn').innerText = "Next Prefix (下一个)";
+        } else {
+            prefixTestIndex = (prefixTestIndex + 1) % localPrefixWords.length;
+            initPrefixTestCard();
+        }
+    }
     window.onload = initData;
   </script>
 </body>

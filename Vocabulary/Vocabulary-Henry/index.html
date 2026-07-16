@@ -29,6 +29,8 @@
     .option-item { display: block; background: #f8fafc; padding: 10px 15px; margin: 8px 0; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer; font-size: 15px; }
     .option-item input { margin-right: 10px; }
     .feedback { font-size: 18px; font-weight: bold; margin: 15px 0; min-height: 28px; }
+    .none-font { font-family: "Courier New", Courier, monospace; font-style: italic; }
+    .step-badge { display: inline-block; background: #f59e0b; color: white; padding: 2px 8px; border-radius: 4px; font-size: 13px; font-weight: bold; margin-bottom: 10px; }
   </style>
 </head>
 <body>
@@ -48,6 +50,8 @@
     <a href="#prefix-test-section">Test The Prefix</a>
     <a href="#suffix-vocabulary">Know The Suffix</a> <!-- ⬇️ 新增这两行 -->
     <a href="#suffix-test-section">Test The Suffix</a>
+    <a href="#expand-vocabulary">Expand Vocabulary</a>
+    <a href="#expand-test-section">Test The Reading</a>
   </nav>
 
   <div class="container">
@@ -182,7 +186,48 @@
         </div>
       </div>
     </section>
+    <!-- 🎯 新增 1：Expand Vocabulary 栏目 -->
+    <section id="expand-vocabulary">
+      <h2>🎯 Expand Vocabulary</h2>
+      <div class="word-box">
+        <div id="expand-word" class="word-title">Loading...</div>
+        <div id="expand-meaning" class="word-meaning">Translation loading...</div>
+        
+        <!-- 结构显示区域 -->
+        <div id="expand-structure" class="word-meaning" style="border: 1px solid #cbd5e1; background: #f1f5f9;"></div>
+        
+        <div class="btn-group">
+          <button class="secondary" onclick="showExpandMeaning()">Show Meaning (看释义)</button>
+          <button style="background: #10b981;" onclick="showExpandStructure()">Show Structure (看结构)</button>
+          <button onclick="nextExpandWord()">Next Word (下一个)</button>
+        </div>
+      </div>
+    </section>
 
+    <!-- ✍️ 新增 2：Test The Reading 三关连考栏目 -->
+    <section id="expand-test-section">
+      <h2>✍️ Test The Reading</h2>
+      <div class="word-box">
+        <!-- 闯关阶段角标提示 -->
+        <div id="reading-step-badge" class="step-badge">Stage 1: Components Check</div>
+        
+        <div id="reading-test-word" class="word-title">Loading...</div>
+        <div id="reading-question-text" style="font-size: 16px; color: #475569; margin-bottom: 15px; font-weight: 500;"></div>
+        
+        <!-- 多层级动态测试选项容器 -->
+        <div id="reading-options-container" class="options-group"></div>
+        
+        <div id="reading-test-feedback" class="feedback"></div>
+        
+        <div class="btn-group">
+          <button id="reading-test-next-btn" onclick="submitOrNextReadingTest()">Submit (确认答案)</button>
+        </div>
+      </div>
+    </section>
+
+  <footer>
+    &copy; <span id="year"></span> Henry W. Chang. All rights reserved.
+  </footer>
   <footer>
     &copy; <span id="year"></span> Henry W. Chang. All rights reserved.
   </footer>
@@ -218,6 +263,13 @@
     let suffixCurrentOptions = [];
     let isSuffixAnswerSubmitted = false;
 
+    // 🧬 E轨：Expand Words 变量声明与三关状态记录 (✨新增)
+    let expandCurrentIndex = 0;
+    let localExpandWords = [];
+    let readingTestIndex = 0;
+    let currentReadingStage = 1; // 1: 考结构组成; 2: 考构件含义; 3: 考整词英译汉
+    let isReadingSubmitted = false;
+
     // 随机假数据包
     const fallbackMeanings = ["n. 缺点，瑕疵", "v. 维持，保持", "adj. 明显的", "n. 复杂性", "v. 评估，估计", "n. 繁荣", "adj. 偶然的"];
 
@@ -249,7 +301,14 @@
         } else if (typeof window.henrySuffixData !== 'undefined') {
             localSuffixWords = window.henrySuffixData;
         }
-        
+
+        // 🎯 纯粹链接端E：精准链接 Expand 词库 (✨本次新增)
+        if (typeof henryExpandData !== 'undefined') {
+            localExpandWords = henryExpandData;
+        } else if (typeof window.henryExpandData !== 'undefined') {
+            localExpandWords = window.henryExpandData;
+        }
+      
         // 联动渲染 Basic 板块
         renderCard();
         initTestCard();
@@ -265,6 +324,10 @@
         // 联动渲染 Surfix 模块
         renderSuffixCard(); // (✨新增)
         initSuffixTestCard(); // (✨新增)
+
+        // 联动渲染 Expand 模块
+        renderExpandCard(); // ✨激活新卡片
+        initReadingTestCard(); // ✨激活超级三关测试
     }
         function renderCard() {
         if (!localWords || localWords.length === 0) {
@@ -607,6 +670,204 @@
             initSuffixTestCard();
         }
     }
+    // ==========================================
+    // 🧠 Expand Vocabulary 控制逻辑 (结构拆解展示)
+    // ==========================================
+    function renderExpandCard() {
+        if (!localExpandWords || localExpandWords.length === 0) {
+            document.getElementById('expand-word').innerText = "❌ 找不到拓展数据\n请检查 data.js 文件";
+            return;
+        }
+        document.getElementById('expand-word').innerText = localExpandWords[expandCurrentIndex].word;
+        document.getElementById('expand-meaning').innerText = localExpandWords[expandCurrentIndex].meaning;
+        document.getElementById('expand-meaning').style.display = 'none';
+        document.getElementById('expand-structure').style.display = 'none';
+    }
+
+    function showExpandMeaning() {
+        if(localExpandWords.length > 0) {
+            document.getElementById('expand-meaning').style.display = 'block';
+        }
+    }
+
+    function showExpandStructure() {
+        if(localExpandWords.length === 0) return;
+        let item = localExpandWords[expandCurrentIndex];
+        
+        let b = item.basic === "none" ? `<span class="none-font">none</span>` : item.basic;
+        let r = item.root === "none" ? `<span class="none-font">none</span>` : item.root;
+        let p = item.prefix === "none" ? `<span class="none-font">none</span>` : item.prefix;
+        let s = item.suffix === "none" ? `<span class="none-font">none</span>` : item.suffix;
+
+        let html = `
+            <div style="text-align: left; font-size: 16px;">
+                <strong>Basic:</strong> ${b}<br/>
+                <strong>Root:</strong> ${r}<br/>
+                <strong>Prefix:</strong> ${p}<br/>
+                <strong>Suffix:</strong> ${s}
+            </div>
+        `;
+        document.getElementById('expand-structure').innerHTML = html;
+        document.getElementById('expand-structure').style.display = 'block';
+    }
+
+    function nextExpandWord() {
+        if(localExpandWords.length > 0) {
+            expandCurrentIndex = (expandCurrentIndex + 1) % localExpandWords.length;
+            renderExpandCard();
+        }
+    }
+
+    // ==========================================
+    // 🧠 Test The Reading 三关一体超级状态机控制逻辑
+    // ==========================================
+    let currentStage2Data = []; 
+
+    function initReadingTestCard() {
+        if (!localExpandWords || localExpandWords.length === 0) return;
+        isReadingSubmitted = false;
+        document.getElementById('reading-test-feedback').innerText = "";
+        document.getElementById('reading-test-feedback').style.color = "";
+        document.getElementById('reading-test-next-btn').innerText = "Submit (确认答案)";
+        
+        let currentItem = localExpandWords[readingTestIndex];
+        document.getElementById('reading-test-word').innerText = currentItem.word;
+        let container = document.getElementById('reading-options-container');
+        container.innerHTML = "";
+
+        if (currentReadingStage === 1) {
+            document.getElementById('reading-step-badge').innerText = "Stage 1: Components Check (多选题)";
+            document.getElementById('reading-question-text').innerText = "Please select ALL components that form this word:";
+            
+            let allTypes = ["basic", "root", "prefix", "suffix", "infix", "circumfix"];
+            allTypes.forEach(type => {
+                container.innerHTML += `
+                    <label class="option-item">
+                        <input type="checkbox" name="stage1-option" value="${type}"> ${type.toUpperCase()}
+                    </label>
+                `;
+            });
+        } 
+        else if (currentReadingStage === 2) {
+            document.getElementById('reading-step-badge').innerText = "Stage 2: Components Meaning (并列单选)";
+            document.getElementById('reading-question-text').innerText = "Select the correct meaning for each component:";
+            
+            currentStage2Data = [];
+            if(currentItem.basic !== "none") currentStage2Data.push({ type: 'basic', val: currentItem.basic, correct: currentItem.meaning });
+            if(currentItem.root !== "none") currentStage2Data.push({ type: 'root', val: currentItem.root, correct: currentItem.root_m });
+            if(currentItem.prefix !== "none") currentStage2Data.push({ type: 'prefix', val: currentItem.prefix, correct: currentItem.prefix_m });
+            if(currentItem.suffix !== "none") currentStage2Data.push({ type: 'suffix', val: currentItem.suffix, correct: currentItem.suffix_m });
+
+            currentStage2Data.forEach((comp, cIdx) => {
+                let subPool = localExpandWords.map(w => [w.meaning, w.root_m, w.prefix_m, w.suffix_m]).flat().filter(m => m && m !== comp.correct);
+                subPool = subPool.concat(fallbackMeanings);
+                subPool.sort(() => 0.5 - Math.random());
+                let subChoices = subPool.slice(0, 5);
+                subChoices.push(comp.correct);
+                subChoices.sort(() => 0.5 - Math.random());
+
+                let selectHtml = `<div style="margin-bottom: 20px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 10px;">
+                    <div style="font-weight: bold; color: #0284c7; margin-bottom: 5px;">Component: ${comp.val} (${comp.type.toUpperCase()})</div>`;
+                subChoices.forEach((ch, oIdx) => {
+                    selectHtml += `
+                        <label class="option-item" style="margin: 4px 0;">
+                            <input type="radio" name="stage2-option-${cIdx}" value="${ch}"> ${oIdx + 1}. ${ch}
+                        </label>
+                    `;
+                });
+                selectHtml += `</div>`;
+                container.innerHTML += selectHtml;
+            });
+        } 
+        else if (currentReadingStage === 3) {
+            document.getElementById('reading-step-badge').innerText = "Stage 3: Whole Word Translation (单选题)";
+            document.getElementById('reading-question-text').innerText = "Select the correct translation for the entire word:";
+            
+            let pool = localExpandWords.map(w => w.meaning).filter(m => m !== currentItem.meaning);
+            pool = pool.concat(fallbackMeanings);
+            pool.sort(() => 0.5 - Math.random());
+            let choices = pool.slice(0, 5);
+            choices.push(currentItem.meaning);
+            choices.sort(() => 0.5 - Math.random());
+
+            choices.forEach((meaning, idx) => {
+                container.innerHTML += `
+                    <label class="option-item">
+                        <input type="radio" name="stage3-option" value="${meaning}"> ${idx + 1}. ${meaning}
+                    </label>
+                `;
+            });
+        }
+    }
+
+    function submitOrNextReadingTest() {
+        if (!localExpandWords || localExpandWords.length === 0) return;
+        let currentItem = localExpandWords[readingTestIndex];
+        let feedbackEl = document.getElementById('reading-test-feedback');
+        
+        if (!isReadingSubmitted) {
+            isReadingSubmitted = true;
+            
+            if (currentReadingStage === 1) {
+                let checked = Array.from(document.querySelectorAll('input[name="stage1-option"]:checked')).map(el => el.value);
+                let expected = [];
+                if(currentItem.basic !== "none") expected.push("basic");
+                if(currentItem.root !== "none") expected.push("root");
+                if(currentItem.prefix !== "none") expected.push("prefix");
+                if(currentItem.suffix !== "none") expected.push("suffix");
+
+                let isCorrect = checked.length === expected.length && checked.every(v => expected.includes(v));
+                if (isCorrect) {
+                    feedbackEl.innerText = "🎉 Stage 1 Passed! Jump to Stage 2.";
+                    feedbackEl.style.color = "#16a34a";
+                    currentReadingStage = 2;
+                } else {
+                    feedbackEl.innerText = "❌ Incorrect structure components! Try Stage 1 again.";
+                    feedbackEl.style.color = "#dc2626";
+                    currentReadingStage = 1;
+                }
+            } 
+            else if (currentReadingStage === 2) {
+                let allCorrect = true;
+                for (let i = 0; i < currentStage2Data.length; i++) {
+                    let selected = document.querySelector(`input[name="stage2-option-${i}"]:checked`);
+                    if (!selected || selected.value !== currentStage2Data[i].correct) {
+                        allCorrect = false;
+                        break;
+                    }
+                }
+                if (allCorrect) {
+                    feedbackEl.innerText = "🎉 Stage 2 Passed! Jump to Final Stage.";
+                    feedbackEl.style.color = "#16a34a";
+                    currentReadingStage = 3;
+                } else {
+                    feedbackEl.innerText = "❌ Some meanings are incorrect! Resetting to Stage 2.";
+                    feedbackEl.style.color = "#dc2626";
+                    currentReadingStage = 2;
+                }
+            } 
+            else if (currentReadingStage === 3) {
+                let selected = document.querySelector('input[name="stage3-option"]:checked');
+                if (selected && selected.value === currentItem.meaning) {
+                    feedbackEl.innerText = "🏆 All Stages Cleared! Mastered this word.";
+                    feedbackEl.style.color = "#16a34a";
+                    currentReadingStage = "NEXT_WORD";
+                } else {
+                    feedbackEl.innerText = "❌ Final translation wrong! Dropping back to Stage 1!";
+                    feedbackEl.style.color = "#dc2626";
+                    currentReadingStage = 1;
+                }
+            }
+            document.getElementById('reading-test-next-btn').innerText = "Continue (继续)";
+        } else {
+            if (currentReadingStage === "NEXT_WORD") {
+                currentReadingStage = 1;
+                readingTestIndex = (readingTestIndex + 1) % localExpandWords.length;
+            }
+            initReadingTestCard();
+        }
+    }
+    
     window.onload = initData;
   </script>
 </body>

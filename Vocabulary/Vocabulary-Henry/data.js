@@ -73,3 +73,28 @@ const henryPrefixFallbackWords = [
 const henryPrefixData = (typeof henryPrefixCustomWords !== 'undefined' && henryPrefixCustomWords.length > 0) 
     ? henryPrefixCustomWords 
     : henryPrefixFallbackWords;
+
+// ==========================================
+// 📦 D 轨：Suffix Words 词库 (✨本次新增)
+// ==========================================
+// 轨 1 🎯【Henry专属Suffix后缀接入端】
+const henrySuffixCustomWords = [
+    {"word": "-able/-ible", "meaning": "suff. 能够...的，易于...的 (例如: understandable, visible)"},
+    {"word": "-ize", "meaning": "suff. 使...化，变为 (例如: realize, modernize)"},
+    {"word": "-ment", "meaning": "suff. 行为，状态，结果 (例如: development, government)"}
+];
+
+// 轨 2 🚨【Henry专属Suffix后缀保险丝】
+const henrySuffixFallbackWords = [
+    {"word": "-ful", "meaning": "suff. 充满...的 (例如: beautiful, helpful)（Suffix范例）"},
+    {"word": "-less", "meaning": "suff. 没有...的，无 (例如: hopeless, careless)（Suffix范例）"},
+    {"word": "-ify", "meaning": "suff. 使...化 (例如: clarify, purify)（Suffix范例）"},
+    {"word": "-tion/-sion", "meaning": "suff. 动作，状态 (例如: education, decision)（Suffix范例）"},
+    {"word": "-al", "meaning": "suff. 具有...性质的 (例如: cultural, logical)（Suffix范例）"},
+    {"word": "-ous/-ious", "meaning": "suff. 充满...的 (例如: dangerous, ambitious)（Suffix范例）"}
+];
+
+// 🎛️ Suffix 融合开关：输出专属变量 "henrySuffixData" 给展示端网页精准抓取
+const henrySuffixData = (typeof henrySuffixCustomWords !== 'undefined' && henrySuffixCustomWords.length > 0) 
+    ? henrySuffixCustomWords 
+    : henrySuffixFallbackWords;

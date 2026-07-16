@@ -34,6 +34,11 @@
   </style>
 </head>
 <body>
+  <!-- 🔒 插入这一块安全遮罩 -->
+  <div id="secure-mask" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0f172a; display: flex; justify-content: center; align-items: center; color: #f8fafc; font-size: 18px; font-weight: bold; z-index: 99999;">
+    🔒 Verifying Henry's Secure Session...
+  </div>
+  
   <header>
     <h1>Henry W. Chang</h1>
     <p>Personal academic homepage – notes, experiments, and ideas.</p>
@@ -276,30 +281,45 @@
     const fallbackMeanings = ["n. 缺点，瑕疵", "v. 维持，保持", "adj. 明显的", "n. 复杂性", "v. 评估，估计", "n. 繁荣", "adj. 偶然的"];
 
     
-        // ⚡【核心修改】：让 data.js 的网关去干重活，这里只管优雅装载
+        // ⚡ 替换原有的 initData，植入安全拦截网
     async function initData() {
-        console.log("🚀 [App] 准备加载词库...");
+        console.log("🚀 [App] 正在验证安全会话...");
 
         try {
-            // 1. 调用在 data.js 中定义的全局统一加载函数
-            await loadAllVocabulary();
+            // 1. 初始化验证客户端
+            const SUB_SUPABASE_URL = 'https://zjsdkyvjirrurehahpac.supabase.co'; 
+            const SUB_SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY'; // 👈 别忘了换成你的 key
+            const subClient = supabase.createClient(SUB_SUPABASE_URL, SUB_SUPABASE_KEY);
 
-            // 2. 将 data.js 处理并暴露在 window 上的数据对齐到本地渲染变量
+            // 2. 核心拦截：检测登录状态
+            const { data: { user }, error } = await subClient.auth.getUser();
+            
+            // 🚨 门禁判断：没登录就踢回上一级目录的 index.html
+            if (error || !user) {
+                console.warn("🔒 拦截！重定向中...");
+                alert("Please Sign In First!");
+                window.location.href = '../index.html'; 
+                return;
+            }
+
+            // 3. 验证通过，继续走你原本的加载逻辑
+            await loadAllVocabulary();
             localWords = window.henryWordData || [];
             localRootWords = window.henryRootData || [];
             localPrefixWords = window.henryPrefixData || [];
             localSuffixWords = window.henrySuffixData || [];
             localExpandWords = window.henryExpandData || [];
 
-            console.log("✨ [App] 词库同步装载成功，启动渲染引擎。");
+            console.log("✨ 验证通过，解锁界面。");
+            document.getElementById('secure-mask').style.display = 'none'; // 解除遮罩
 
         } catch (error) {
-            console.error("❌ [App] 数据加载失败: ", error);
-            document.getElementById('word').innerText = "❌ 数据源装载失败，请检查网络或控制台。";
+            console.error("❌ 验证异常: ", error);
+            document.getElementById('word').innerText = "❌ 验证失败，请刷新。";
             return;
         }
         
-        // 3. 联动渲染你的各个面板（这里完全保留了你原有的高能渲染调用）
+        // 4. 执行你页面原本的渲染调用
         renderCard();
         initTestCard();
         renderRootCard();

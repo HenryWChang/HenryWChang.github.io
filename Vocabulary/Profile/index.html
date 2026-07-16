@@ -32,6 +32,7 @@
 
   <label>Status</label>
   <select id="status" onchange="renderDynamicFields()">
+    <option value="">-- Please Select --</option>
     <option value="Student">Student</option>
     <option value="Professional">Professional</option>
   </select>
@@ -40,6 +41,7 @@
 
   <label>Aim</label>
   <select id="aim">
+    <option value="">-- Please Select --</option>
     <option>Improvement</option><option>Gaokao English (NCEE, English)</option><option>CET-4</option><option>CET-6</option>
     <option>TEM-4</option><option>TEM-8</option><option>Postgraduate Entrance English</option>
     <option>IELTS</option><option>TOEFL</option><option>GRE</option><option>Immigration</option><option>Other</option>
@@ -51,10 +53,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // 确保只定义一次 supabase 客户端，并统一命名为 supabaseClient
   const supabaseClient = supabase.createClient('https://zjsdkyvjirrurehahpac.supabase.co', 'sb_publishable_6JSMsFOcoVVPpvVjzktC_w_S0FUKaeN');
 
-  // 初始化函数
   async function init() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) { window.location.href = '../index.html'; return; }
@@ -64,48 +64,80 @@
     if (profile) {
       document.getElementById('name').value = profile.name || '';
       document.getElementById('gender').value = profile.gender || 'Male';
-      document.getElementById('status').value = profile.status || 'Student';
-      document.getElementById('aim').value = profile.aim || 'Improvement';
-      renderDynamicFields(profile.details_json);
-    } else {
-      renderDynamicFields();
+      document.getElementById('status').value = profile.status || '';
+      document.getElementById('aim').value = profile.aim || '';
+      renderDynamicFields(profile.details_json || {});
     }
   }
 
-  // 动态字段渲染
   function renderDynamicFields(saved = {}) {
     const status = document.getElementById('status').value;
     const container = document.getElementById('dynamic-fields');
-    // ... (保持你之前的渲染逻辑不变) ...
+    if (!status) { container.innerHTML = ''; return; }
+
+    if (status === 'Student') {
+      container.innerHTML = `
+        <label>Stage</label>
+        <select id="stage" onchange="renderMajor('${saved.major || ''}')">
+          <option value="">-- Please Select --</option>
+          <option ${saved.stage=='Primary'?'selected':''}>Primary</option>
+          <option ${saved.stage=='Secondary'?'selected':''}>Secondary</option>
+          <option ${saved.stage=='Undergraduate'?'selected':''}>Undergraduate</option>
+          <option ${saved.stage=='Postgraduate'?'selected':''}>Postgraduate</option>
+          <option ${saved.stage=='Doctoral'?'selected':''}>Doctoral</option>
+        </select>
+        <div id="major-wrap"></div>`;
+      if (saved.stage) renderMajor(saved.major);
+    } else {
+      container.innerHTML = `
+        <label>Occupation</label>
+        <select id="occupation"><option value="">-- Please Select --</option>
+          <option ${saved.occupation=='Managers'?'selected':''}>Managers</option>
+          <option ${saved.occupation=='Professionals'?'selected':''}>Professionals</option>
+          <option ${saved.occupation=='Technicians and Associate Professionals'?'selected':''}>Technicians and Associate Professionals</option>
+        </select>
+        <label>Highest Degree</label>
+        <select id="degree"><option value="">-- Please Select --</option>
+          <option ${saved.degree=='Bachelor'?"selected":""}>Bachelor's</option>
+          <option ${saved.degree=='Master'?"selected":""}>Master's</option>
+        </select>`;
+    }
   }
 
-  // 核心保存函数 - 确保这是全局函数
+  function renderMajor(selectedMajor = "") {
+    const stage = document.getElementById('stage').value;
+    const wrap = document.getElementById('major-wrap');
+    if (['Undergraduate', 'Postgraduate', 'Doctoral'].includes(stage)) {
+      wrap.innerHTML = `<label>Major</label><select id="major"><option value="">-- Please Select --</option>
+        <option ${selectedMajor=='Education'?'selected':''}>Education</option>
+        <option ${selectedMajor=='Business, Administration and Law'?'selected':''}>Business, Administration and Law</option>
+        </select>`;
+    } else { wrap.innerHTML = ''; }
+  }
+
   window.saveProfile = async function() {
     const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) return;
-    
-    // 获取表单数据
-    const name = document.getElementById('name').value;
-    const gender = document.getElementById('gender').value;
     const status = document.getElementById('status').value;
-    const aim = document.getElementById('aim').value;
-    // (获取动态字段逻辑...)
+    
+    // 构建动态数据对象
+    let details = {};
+    if (status === 'Student') {
+      details = { stage: document.getElementById('stage').value, major: document.getElementById('major')?.value || "N/A" };
+    } else {
+      details = { occupation: document.getElementById('occupation').value, degree: document.getElementById('degree').value };
+    }
 
     const { error } = await supabaseClient.from('profiles').upsert({
       id: user.id, 
       email: user.email, 
-      name: name,
-      gender: gender, 
+      name: document.getElementById('name').value,
+      gender: document.getElementById('gender').value, 
       status: status,
-      // details_json: ...,
-      aim: aim
+      details_json: details, // 【修正点：这里把动态数据存入 JSON】
+      aim: document.getElementById('aim').value
     });
 
-    if (error) {
-      alert("Error: " + error.message);
-    } else {
-      alert("Profile saved successfully!");
-    }
+    alert(error ? "Error: " + error.message : "Profile saved successfully!");
   }
 
   init();

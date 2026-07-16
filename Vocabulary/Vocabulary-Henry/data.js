@@ -98,3 +98,53 @@ const henrySuffixFallbackWords = [
 const henrySuffixData = (typeof henrySuffixCustomWords !== 'undefined' && henrySuffixCustomWords.length > 0) 
     ? henrySuffixCustomWords 
     : henrySuffixFallbackWords;
+
+// ==========================================
+// 📦 E 轨：Expand Words 超级词库 (✨本次复杂新增)
+// ==========================================
+// 轨 1 🎯【Henry专属Expand六要素接入端】
+const henryExpandCustomWords = [
+    {
+        "word": "biodegradable",
+        "meaning": "adj. 可生物降解的",
+        "basic": "none",
+        "root": "bio-",
+        "prefix": "de-",
+        "suffix": "-able/-ible",
+        // 为了第二关提取各个组成部分的“独立释义干扰项”，附带各部分的明文释义
+        "root_m": "pref. 生命，生物 (例如: biology, biography)",
+        "prefix_m": "pref. 向下，减少 (例如: decrease, devalue)（Prefix范例）",
+        "suffix_m": "suff. 能够...的，易于...的 (例如: understandable, visible)"
+    },
+    {
+        "word": "contradiction",
+        "meaning": "n. 矛盾，反驳",
+        "basic": "none",
+        "root": "dict-",
+        "prefix": "anti-", 
+        "suffix": "-tion/-sion",
+        "root_m": "pref. 言，说 (例如: contradict, predict)",
+        "prefix_m": "pref. 反对，相反 (例如: antisocial, antibody)",
+        "suffix_m": "suff. 动作，状态 (例如: education, decision)（Suffix范例）"
+    }
+];
+
+// 轨 2 🚨【Henry专属Expand保险丝】
+const henryExpandFallbackWords = [
+    {
+        "word": "unpredictable",
+        "meaning": "adj. 不可预测的",
+        "basic": "none",
+        "root": "dict-",
+        "prefix": "pre-",
+        "suffix": "-able/-ible",
+        "root_m": "pref. 言，说 (例如: contradict, predict)",
+        "prefix_m": "pref. 在...之前 (role: preheat, preview)（Prefix范例）",
+        "suffix_m": "suff. 能够...的，易于...的 (例如: understandable, visible)"
+    }
+];
+
+// 🎛️ Expand 融合开关：输出专属变量 "henryExpandData"
+const henryExpandData = (typeof henryExpandCustomWords !== 'undefined' && henryExpandCustomWords.length > 0) 
+    ? henryExpandCustomWords 
+    : henryExpandFallbackWords;

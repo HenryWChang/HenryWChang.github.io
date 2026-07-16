@@ -228,10 +228,15 @@
   <footer>
     &copy; <span id="year"></span> Henry W. Chang. All rights reserved.
   </footer>
-  <footer>
-    &copy; <span id="year"></span> Henry W. Chang. All rights reserved.
-  </footer>
-  <!-- 🧬 接入专属数据库 -->
+
+  <!-- 🧬 链入 5 个独立的纯数据文件（物理隔离，直接覆盖，支持本地双击运行） -->
+  <script src="basic-data.js"></script>
+  <script src="root-data.js"></script>
+  <script src="prefix-data.js"></script>
+  <script src="suffix-data.js"></script>
+  <script src="expand-data.js"></script>
+  
+  <!-- 🧬 接入中转路由器逻辑（判断自定义数据或 fallback） -->
   <script src="data.js"></script>
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();

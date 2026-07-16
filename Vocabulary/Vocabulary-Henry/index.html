@@ -229,15 +229,12 @@
     &copy; <span id="year"></span> Henry W. Chang. All rights reserved.
   </footer>
 
-  <!-- 🧬 链入 5 个独立的纯数据文件（物理隔离，直接覆盖，支持本地双击运行） -->
-  <script src="basic-data.js"></script>
-  <script src="root-data.js"></script>
-  <script src="prefix-data.js"></script>
-  <script src="suffix-data.js"></script>
-  <script src="expand-data.js"></script>
-  
-  <!-- 🧬 接入中转路由器逻辑（判断自定义数据或 fallback） -->
+  <!-- 🧬 链入 5 个独立的纯数据文件（物理隔离，直接覆盖，支持本地双击运行），这部分我们现在废弃，旧代码已删除 -->
+  <!-- 🧬 1. 新增：引入连接 Supabase 的官方核心工具包 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 🧬 仅链入你的中转路由器 data.js（不再引入任何分-data） -->
   <script src="data.js"></script>
+  
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
     // 🧬 A轨：Basic Words 变量声明
@@ -279,73 +276,40 @@
     const fallbackMeanings = ["n. 缺点，瑕疵", "v. 维持，保持", "adj. 明显的", "n. 复杂性", "v. 评估，估计", "n. 繁荣", "adj. 偶然的"];
 
     function initData() {
-        // 🎯 纯粹链接端A：精准链接 Basic 词库
-        if (typeof henryWordData !== 'undefined') {
-            localWords = henryWordData;
-        } else if (typeof window.henryWordData !== 'undefined') {
-            localWords = window.henryWordData;
+        // ⚡【核心修改】：让 data.js 的网关去干重活，这里只管优雅装载
+    async function initData() {
+        console.log("🚀 [App] 准备加载词库...");
+
+        try {
+            // 1. 调用在 data.js 中定义的全局统一加载函数
+            await loadAllVocabulary();
+
+            // 2. 将 data.js 处理并暴露在 window 上的数据对齐到本地渲染变量
+            localWords = window.henryWordData || [];
+            localRootWords = window.henryRootData || [];
+            localPrefixWords = window.henryPrefixData || [];
+            localSuffixWords = window.henrySuffixData || [];
+            localExpandWords = window.henryExpandData || [];
+
+            console.log("✨ [App] 词库同步装载成功，启动渲染引擎。");
+
+        } catch (error) {
+            console.error("❌ [App] 数据加载失败: ", error);
+            document.getElementById('word').innerText = "❌ 数据源装载失败，请检查网络或控制台。";
+            return;
         }
         
-        // 🎯 纯粹链接端B：精准链接 Root 词库 (✨新增)
-        if (typeof henryRootData !== 'undefined') {
-            localRootWords = henryRootData;
-        } else if (typeof window.henryRootData !== 'undefined') {
-            localRootWords = window.henryRootData;
-        }
-
-        // 🎯 纯粹链接端C：精准链接 Prefix 词库 (✨新增)
-        if (typeof henryPrefixData !== 'undefined') {
-            localPrefixWords = henryPrefixData;
-        } else if (typeof window.henryPrefixData !== 'undefined') {
-            localPrefixWords = window.henryPrefixData;
-        }
-
-        // 🎯 纯粹链接端D：精准链接 Suffix 词库 (✨新增)
-        if (typeof henrySuffixData !== 'undefined') {
-            localSuffixWords = henrySuffixData;
-        } else if (typeof window.henrySuffixData !== 'undefined') {
-            localSuffixWords = window.henrySuffixData;
-        }
-
-        // 🎯 纯粹链接端E：精准链接 Expand 词库并按 group 属性强关联重新排序
-        let rawExpand = [];
-        if (typeof henryExpandData !== 'undefined') {
-            rawExpand = henryExpandData;
-        } else if (typeof window.henryExpandData !== 'undefined') {
-            rawExpand = window.henryExpandData;
-        }
-
-        // 🧠 核心算法升级：按 group 值对单词数组进行聚类重排
-        // 从而确保 group 相同的单词在“背单词”和“测试”中绝对紧密相连、成组连续出现
-        if (rawExpand && rawExpand.length > 0) {
-            localExpandWords = [...rawExpand].sort((a, b) => {
-                let gA = a.group || "";
-                let gB = b.group || "";
-                return gA.localeCompare(gB);
-            });
-        } else {
-            localExpandWords = [];
-        }
-      
-        // 联动渲染 Basic 板块
+        // 3. 联动渲染你的各个面板（这里完全保留了你原有的高能渲染调用）
         renderCard();
         initTestCard();
-
-        // 联动渲染 Root 板块 (✨新增)
         renderRootCard();
         initRootTestCard();
-
-        // 联动渲染 Prefix 板块 (✨新增)
         renderPrefixCard();
         initPrefixTestCard();
-
-        // 联动渲染 Surfix 模块
-        renderSuffixCard(); // (✨新增)
-        initSuffixTestCard(); // (✨新增)
-
-        // 联动渲染 Expand 模块
-        renderExpandCard(); // ✨激活新卡片
-        initReadingTestCard(); // ✨激活超级三关测试
+        renderSuffixCard(); 
+        initSuffixTestCard(); 
+        renderExpandCard(); 
+        initReadingTestCard();
     }
         function renderCard() {
         if (!localWords || localWords.length === 0) {

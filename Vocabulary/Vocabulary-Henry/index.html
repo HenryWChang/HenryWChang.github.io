@@ -741,13 +741,25 @@
             document.getElementById('reading-step-badge').innerText = "Stage 1: Components Check (多选题)";
             document.getElementById('reading-question-text').innerText = "Please select ALL components that form this word:";
             
-            // 1. 动态获取当前单词所有正确的、非 "none" 的真实构成构件
+            // 1. 动态获取当前单词所有正确的构成构件
             let expected = [];
-            if (currentItem.basic !== "none") expected.push(currentItem.basic);
-            if (currentItem.root !== "none") expected.push(currentItem.root);
-            if (currentItem.prefix !== "none") expected.push(currentItem.prefix);
-            if (currentItem.suffix !== "none") expected.push(currentItem.suffix);
 
+            // 创建一个辅助函数来处理可能为字符串或数组的数据
+            const collectComponents = (data) => {
+                if (!data || data === "none") return;
+                if (Array.isArray(data)) {
+                    // 如果是数组，把每个元素加入
+                    data.forEach(item => expected.push(item));
+                } else {
+                    // 如果是字符串，直接加入
+                    expected.push(data);
+                }
+            };
+
+            collectComponents(currentItem.basic);
+            collectComponents(currentItem.root);
+            collectComponents(currentItem.prefix);
+            collectComponents(currentItem.suffix);
             // 2. 动态收集干扰项池
             let distractorPool = [];
             localExpandWords.forEach(w => {
@@ -841,33 +853,37 @@
     if (!isReadingSubmitted) {
         isReadingSubmitted = true;
         
-        // --- Stage 1: 构件比对 (更强健的防御版本) ---
+        // --- Stage 1: 构件比对 (增补：统一处理字符串与数组) ---
         if (currentReadingStage === 1) {
             let checked = Array.from(document.querySelectorAll('input[name="stage1-option"]:checked')).map(el => el.value);
             
-            // 更安全的清理函数：确保输入必须是字符串，如果是其他类型则转为空串
-            const clean = (val) => {
-                if (typeof val !== 'string') return '';
-                return val.replace(/-/g, '');
+            // 1. 定义清理函数
+            const clean = (val) => (typeof val === 'string' ? val.replace(/-/g, '') : '');
+
+            // 2. 提取数据 (核心改动：用统一函数处理)
+            let expected = [];
+            const add = (data) => {
+                if (!data || data === "none") return;
+                if (Array.isArray(data)) {
+                    data.forEach(item => expected.push(item));
+                } else {
+                    expected.push(data);
+                }
             };
             
-            let expected = [];
-            // 确保只有当值存在且为字符串时才 push
-            if (typeof currentItem.basic === 'string' && currentItem.basic !== "none") expected.push(currentItem.basic);
-            if (typeof currentItem.root === 'string' && currentItem.root !== "none") expected.push(currentItem.root);
-            if (typeof currentItem.prefix === 'string' && currentItem.prefix !== "none") expected.push(currentItem.prefix);
-            if (typeof currentItem.suffix === 'string' && currentItem.suffix !== "none") expected.push(currentItem.suffix);
+            add(currentItem.basic);
+            add(currentItem.root);
+            add(currentItem.prefix);
+            add(currentItem.suffix);
 
-            let cleanExpected = expected.map(clean);
-            let cleanChecked = checked.map(clean);
-
-            // 比对前移除空字符串干扰（确保不会因为 "none" 或空值导致比对失败）
-            cleanExpected = cleanExpected.filter(s => s !== "");
-            cleanChecked = cleanChecked.filter(s => s !== "");
+            // 3. 执行清理与比对
+            let cleanExpected = expected.map(clean).filter(s => s !== "");
+            let cleanChecked = checked.map(clean).filter(s => s !== "");
 
             let isCorrect = cleanChecked.length === cleanExpected.length && 
                             cleanChecked.every(v => cleanExpected.includes(v));
 
+            // 4. 结果判定
             if (isCorrect) {
                 feedbackEl.innerText = "🎉 Stage 1 Passed! Jump to Stage 2.";
                 feedbackEl.style.color = "#16a34a";
@@ -877,7 +893,8 @@
                 feedbackEl.style.color = "#dc2626";
                 currentReadingStage = 1;
             }
-        } 
+        }
+          
         // --- Stage 2: 构件含义 ---
         else if (currentReadingStage === 2) {
             let allCorrect = true;

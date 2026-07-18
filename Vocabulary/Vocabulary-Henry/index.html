@@ -797,17 +797,34 @@
             question.innerText = "Select correct meaning for each component:";
             currentStage2Data = [];
             
-            let components = [
-                { type: 'Root', val: currentItem.root, correct: currentItem.root_meanings },
-                { type: 'Prefix', val: currentItem.prefix, correct: currentItem.prefix_meanings },
-                { type: 'Suffix', val: currentItem.suffix, correct: currentItem.suffix_meanings }
-            ].filter(c => c.val && c.val !== "none" && Array.isArray(c.correct));
+            // 准备组件数据，增加过滤逻辑，确保只有确实存在的组件才会生成题目
+            const components = [];
+            const addComp = (type, val, correctArr) => {
+                // 如果 val 不存在或为 'none'，或者 correctArr 不是数组且为空，则跳过
+                if (!val || val === "none" || !Array.isArray(correctArr) || correctArr.length === 0) return;
+                components.push({ type, val: Array.isArray(val) ? val[0] : val, correct: correctArr });
+            };
+
+            addComp('Root', currentItem.root, currentItem.root_meanings);
+            addComp('Prefix', currentItem.prefix, currentItem.prefix_meanings);
+            addComp('Suffix', currentItem.suffix, currentItem.suffix_meanings);
 
             currentStage2Data = components;
+            
+            // 为了让干扰项从“正确选项所在的库”中抽，我们构建一个所有含义的大池子
+            const allMeanings = [...new Set([
+                ...(currentItem.root_meanings || []),
+                ...(currentItem.prefix_meanings || []),
+                ...(currentItem.suffix_meanings || []),
+                ...fallbackMeanings
+            ])];
+
             components.forEach((comp, cIdx) => {
-                // 确保正确答案在选项中，并补足到 6 个选项
-                let others = fallbackMeanings.filter(m => !comp.correct.includes(m));
-                let options = [...comp.correct.slice(0, 1), ...others.slice(0, 5)].sort(() => 0.5 - Math.random());
+                // 正确答案(取第一个) + 从所有含义库中随机抽取的 5 个干扰项
+                let distractors = allMeanings.filter(m => !comp.correct.includes(m))
+                                            .sort(() => 0.5 - Math.random())
+                                            .slice(0, 5);
+                let options = [comp.correct[0], ...distractors].sort(() => 0.5 - Math.random());
                 
                 let html = `<div style="margin: 20px 0; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">
                             <p style="margin-top:0;"><strong>组件: ${comp.val}</strong></p>`;

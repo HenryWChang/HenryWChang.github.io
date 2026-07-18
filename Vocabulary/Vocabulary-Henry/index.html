@@ -776,8 +776,20 @@
         if (currentReadingStage === 1) {
             badge.innerText = "Stage 1: Components Check";
             question.innerText = "Please select ALL components:";
-            let expected = [currentItem.basic, ...currentItem.root, ...currentItem.prefix, ...currentItem.suffix].filter(i => i && i !== "none");
-            let choices = [...new Set([...expected, "-ly", "con-", "trans-", "sub-", "im-", "un-"])].sort(() => 0.5 - Math.random());
+            
+            // 确保每个字段都被当作数组处理，避免解构导致拆解成单个字母
+            let rawBasic = Array.isArray(currentItem.basic) ? currentItem.basic : [currentItem.basic];
+            let rawRoot = Array.isArray(currentItem.root) ? currentItem.root : [currentItem.root];
+            let rawPrefix = Array.isArray(currentItem.prefix) ? currentItem.prefix : [currentItem.prefix];
+            let rawSuffix = Array.isArray(currentItem.suffix) ? currentItem.suffix : [currentItem.suffix];
+
+            let expected = [...rawBasic, ...rawRoot, ...rawPrefix, ...rawSuffix]
+                           .filter(i => i && i !== "none");
+            
+            // 去重并合并干扰项
+            let distractorPool = ["-ly", "con-", "trans-", "sub-", "im-", "un-"];
+            let choices = [...new Set([...expected, ...distractorPool])].sort(() => 0.5 - Math.random());
+            
             choices.forEach(val => container.innerHTML += `<label class="option-item"><input type="checkbox" name="stage1-option" value="${val}"> ${val}</label>`);
         } 
         else if (currentReadingStage === 2) {

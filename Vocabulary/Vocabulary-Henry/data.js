@@ -157,4 +157,15 @@ async function loadAllVocabulary() {
 
         console.log("💾 [Gateway] 离线备份数据已成功挂载！降级方案就绪。");
     }
+    // 在 loadAllVocabulary 函数末尾添加以下逻辑
+    console.log("🛠️ [Gateway] 正在构建构件释义索引...");
+
+    // 创建一个字典，方便查找：dict["tract-"] = "拉，抽..."
+    const meaningMap = {};
+    window.henryRootData.forEach(item => meaningMap[item.word] = item.meaning);
+    window.henryPrefixData.forEach(item => meaningMap[item.word] = item.meaning);
+    window.henrySuffixData.forEach(item => meaningMap[item.word] = item.meaning);
+
+    // 将映射表挂载到全局，供渲染时调用
+    window.henryMeaningMap = meaningMap;
 }

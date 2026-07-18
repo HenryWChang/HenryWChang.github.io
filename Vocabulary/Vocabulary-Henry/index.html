@@ -733,20 +733,22 @@
         if(localExpandWords.length === 0) return;
         let item = localExpandWords[expandCurrentIndex];
         
-        // 保持你原有的逻辑，仅优化了“none”的显示处理
+        // 保持含义展示逻辑
         const formatM = (arr) => (arr && arr.length) ? arr.join(' / ') : "–";
+        
+        // 新增：统一构件显示逻辑，如果为空或 "none" 则显示 none
+        const formatComp = (val) => (!val || val === "none" || (Array.isArray(val) && val.length === 0)) ? "none" : val;
 
-        // 外观调整：使用更清爽的布局，给释义部分增加微小的边距，颜色更柔和
         let html = `
             <div style="text-align: left; font-size: 15px; line-height: 1.8; color: #334155;">
-                <div style="margin-bottom: 4px;"><strong>Basic:</strong> ${item.basic || '–'}</div>
-                <div style="margin-bottom: 4px;"><strong>Root:</strong> ${item.root || '–'} 
+                <div style="margin-bottom: 4px;"><strong>Basic:</strong> ${item.basic || 'none'}</div>
+                <div style="margin-bottom: 4px;"><strong>Root:</strong> ${formatComp(item.root)} 
                     <span style="color:#0284c7; font-size: 14px; font-style: italic;">${formatM(item.root_meanings)}</span>
                 </div>
-                <div style="margin-bottom: 4px;"><strong>Prefix:</strong> ${item.prefix || '–'} 
+                <div style="margin-bottom: 4px;"><strong>Prefix:</strong> ${formatComp(item.prefix)} 
                     <span style="color:#0284c7; font-size: 14px; font-style: italic;">${formatM(item.prefix_meanings)}</span>
                 </div>
-                <div><strong>Suffix:</strong> ${item.suffix || '–'} 
+                <div><strong>Suffix:</strong> ${formatComp(item.suffix)} 
                     <span style="color:#0284c7; font-size: 14px; font-style: italic;">${formatM(item.suffix_meanings)}</span>
                 </div>
             </div>
@@ -754,7 +756,7 @@
         
         document.getElementById('expand-structure').innerHTML = html;
         document.getElementById('expand-structure').style.display = 'block';
-        document.getElementById('expand-structure').style.padding = '15px'; // 增加内边距让结构更好看
+        document.getElementById('expand-structure').style.padding = '15px'; 
     }
 
     function nextExpandWord() {

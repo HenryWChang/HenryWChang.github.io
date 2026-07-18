@@ -794,21 +794,23 @@
         } 
         else if (currentReadingStage === 2) {
             badge.innerText = "Stage 2: Components Meaning";
-            question.innerText = "Select correct meanings:";
+            question.innerText = "Select correct meaning for each component:";
             currentStage2Data = [];
             
-            // 关键点：这里直接读取 SQL 传过来的 root_meanings (数组)
             let components = [
                 { type: 'Root', val: currentItem.root, correct: currentItem.root_meanings },
                 { type: 'Prefix', val: currentItem.prefix, correct: currentItem.prefix_meanings },
                 { type: 'Suffix', val: currentItem.suffix, correct: currentItem.suffix_meanings }
-            ].filter(c => c.val && Array.isArray(c.correct) && c.correct.length > 0);
+            ].filter(c => c.val && c.val !== "none" && Array.isArray(c.correct));
 
             currentStage2Data = components;
             components.forEach((comp, cIdx) => {
-                let options = [...comp.correct, "无对应释义", "拼写错误"].sort(() => 0.5 - Math.random());
-                let html = `<div style="margin: 15px 0; border: 1px solid #ddd; padding: 10px;">
-                            <p><strong>组件: ${comp.val}</strong></p>`;
+                // 确保正确答案在选项中，并补足到 6 个选项
+                let others = fallbackMeanings.filter(m => !comp.correct.includes(m));
+                let options = [...comp.correct.slice(0, 1), ...others.slice(0, 5)].sort(() => 0.5 - Math.random());
+                
+                let html = `<div style="margin: 20px 0; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">
+                            <p style="margin-top:0;"><strong>组件: ${comp.val}</strong></p>`;
                 options.forEach(opt => html += `<label class="option-item"><input type="radio" name="s2-${cIdx}" value="${opt}"> ${opt}</label>`);
                 container.innerHTML += html + `</div>`;
             });
@@ -828,32 +830,44 @@
         if (!localExpandWords || localExpandWords.length === 0) return;
         let currentItem = localExpandWords[readingTestIndex];
         let feedbackEl = document.getElementById('reading-test-feedback');
+        let nextBtn = document.getElementById('reading-test-next-btn');
         
         if (!isReadingSubmitted) {
             isReadingSubmitted = true;
-            if (currentReadingStage === 2) {
+            
+            if (currentReadingStage === 1) {
+                // 增加 Stage 1 的反馈提示
+                feedbackEl.innerText = "✅ Stage 1 完成，准备进入含义考查。";
+                feedbackEl.style.color = "#0284c7";
+                currentReadingStage = 2;
+            } 
+            else if (currentReadingStage === 2) {
                 let allCorrect = true;
                 currentStage2Data.forEach((comp, i) => {
                     let selected = document.querySelector(`input[name="s2-${i}"]:checked`);
-                    // 使用 includes 判断 SQL 返回的数组
                     if (!selected || !comp.correct.includes(selected.value)) allCorrect = false;
                 });
-                feedbackEl.innerText = allCorrect ? "🎉 Stage 2 Passed!" : "❌ Incorrect! Try again.";
+                feedbackEl.innerText = allCorrect ? "🎉 Stage 2 正确！" : "❌ 错误，请检查选项。";
                 feedbackEl.style.color = allCorrect ? "#16a34a" : "#dc2626";
                 if (allCorrect) currentReadingStage = 3;
-            } else if (currentReadingStage === 1) {
-                // Stage 1 保持不变... (如果需要补全这里，请确保这里有你的清理逻辑)
-                currentReadingStage = 2; 
-            } else if (currentReadingStage === 3) {
+            } 
+            else if (currentReadingStage === 3) {
                 let selected = document.querySelector('input[name="stage3-option"]:checked');
                 if (selected && selected.value === currentItem.meaning) {
-                    feedbackEl.innerText = "🏆 All Stages Cleared!";
+                    feedbackEl.innerText = "🏆 通关成功！";
+                    feedbackEl.style.color = "#16a34a";
                     currentReadingStage = "NEXT_WORD";
+                } else {
+                    feedbackEl.innerText = "❌ 最终翻译错误。";
+                    feedbackEl.style.color = "#dc2626";
                 }
             }
-            document.getElementById('reading-test-next-btn').innerText = "Continue";
+            nextBtn.innerText = "Continue (继续)";
         } else {
-            if (currentReadingStage === "NEXT_WORD") { readingTestIndex++; currentReadingStage = 1; }
+            if (currentReadingStage === "NEXT_WORD") { 
+                readingTestIndex = (readingTestIndex + 1) % localExpandWords.length; 
+                currentReadingStage = 1; 
+            }
             initReadingTestCard();
         }
     }

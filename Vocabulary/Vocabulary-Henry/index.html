@@ -734,31 +734,21 @@
     function showExpandStructure() {
     if (localExpandWords.length === 0) return;
     let item = localExpandWords[expandCurrentIndex];
+    
+    // 调试：这会打印出该条目的真实数据，确保你在网页上看到的字段名完全吻合
+    console.log("当前数据项:", item);
 
-    // 格式化函数：专门处理后端传回的数组字段
-    const formatBackendMeanings = (meaningsArr) => {
-        // 如果字段不存在、不是数组、或者是空数组，显示 –
-        if (!meaningsArr || !Array.isArray(meaningsArr) || meaningsArr.length === 0) {
-            return "–";
-        }
-        // 如果有数据，直接 join 拼接
-        return `<span style="color:#0284c7"><${meaningsArr.join(' / ')}></span>`;
-    };
+    // 格式化函数：直接处理 text 字段
+    const formatVal = (val) => (!val || val === "none" || val === "") ? "–" : val;
+    const formatMeaningText = (val) => (!val || val === "none" || val === "") ? "–" : `<span style="color:#0284c7"><${val}></span>`;
 
-    // 基础显示逻辑
-    const formatVal = (val) => (!val || val === "none") ? "–" : (Array.isArray(val) ? val.join(', ') : val);
-
-    // 核心调用：直接读取 SQL 视图生成的 root_meanings 等字段
-    let rootM = formatBackendMeanings(item.root_meanings);
-    let prefixM = formatBackendMeanings(item.prefix_meanings);
-    let suffixM = formatBackendMeanings(item.suffix_meanings);
-
+    // 直接读取数据库中存在的 root_m, prefix_m, suffix_m 字段
     let html = `
         <div style="text-align: left; font-size: 16px;">
             <strong>Basic:</strong> ${formatVal(item.basic)}<br/>
-            <strong>Root:</strong> ${formatVal(item.root)} ${rootM}<br/>
-            <strong>Prefix:</strong> ${formatVal(item.prefix)} ${prefixM}<br/>
-            <strong>Suffix:</strong> ${formatVal(item.suffix)} ${suffixM}
+            <strong>Root:</strong> ${formatVal(item.root)} ${formatMeaningText(item.root_m)}<br/>
+            <strong>Prefix:</strong> ${formatVal(item.prefix)} ${formatMeaningText(item.prefix_m)}<br/>
+            <strong>Suffix:</strong> ${formatVal(item.suffix)} ${formatMeaningText(item.suffix_m)}
         </div>
     `;
     

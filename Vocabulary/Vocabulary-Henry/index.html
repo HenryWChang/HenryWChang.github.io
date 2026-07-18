@@ -800,30 +800,37 @@
         currentStage2Data = [];
         let item = localExpandWords[readingTestIndex];
         
-        // 🛠️ 关键修复：从视图返回的 root_meanings 等字段读取含义
-        // 视图返回的是数组，我们取第一个元素或拼接
-        const getMeaning = (arr) => (Array.isArray(arr) && arr.length > 0) ? arr[0] : "无含义配置";
+        // 🛠️ 强制统一格式化函数
+        const normalize = (arr) => {
+            if (!Array.isArray(arr)) return ["(暂无释义)"];
+            return arr.filter(m => m && m.trim() !== "");
+        };
 
         let components = [
-            { type: 'Root', val: item.root, correct: getMeaning(item.root_meanings) },
-            { type: 'Prefix', val: item.prefix, correct: getMeaning(item.prefix_meanings) },
-            { type: 'Suffix', val: item.suffix, correct: getMeaning(item.suffix_meanings) }
+            { type: 'Root', val: item.root, correct: normalize(item.root_meanings) },
+            { type: 'Prefix', val: item.prefix, correct: normalize(item.prefix_meanings) },
+            { type: 'Suffix', val: item.suffix, correct: normalize(item.suffix_meanings) }
         ];
 
-        currentStage2Data = components.filter(c => c.val && c.val !== "none" && c.correct !== "无含义配置");
+        // 只有 val 存在才添加，并且 correct 必须是非空的
+        currentStage2Data = components.filter(c => c.val && c.val !== "none" && c.correct[0] !== "(暂无释义)");
 
         if (currentStage2Data.length === 0) {
             container.innerHTML = "<p>此单词暂无构件释义。</p>";
         } else {
             currentStage2Data.forEach((comp, cIdx) => {
-                // 干扰项从整个扩展词库里找
+                // 干扰项池（提取所有词库中的 meaning 数组并展平）
                 let allPossible = localExpandWords.flatMap(w => [
-                    ...w.root_meanings || [], 
-                    ...w.prefix_meanings || [], 
-                    ...w.suffix_meanings || []
+                    ...(w.root_meanings || []), 
+                    ...(w.prefix_meanings || []), 
+                    ...(w.suffix_meanings || [])
                 ]);
-                let subPool = [...new Set(allPossible)].filter(m => m !== comp.correct);
-                let options = [...subPool.sort(() => 0.5 - Math.random()).slice(0, 3), comp.correct].sort(() => 0.5 - Math.random());
+                
+                // 去重并过滤掉正确答案
+                let subPool = [...new Set(allPossible)].filter(m => !comp.correct.includes(m));
+                
+                // 随机选取 3 个干扰项 + 正确答案数组的第一个作为正确选项
+                let options = [...subPool.sort(() => 0.5 - Math.random()).slice(0, 3), comp.correct[0]].sort(() => 0.5 - Math.random());
 
                 let html = `<div style="margin: 20px 0; border: 1px solid #ddd; padding: 10px;">
                             <p><strong>组件: ${comp.val}</strong></p>`;
@@ -904,24 +911,26 @@
         else if (currentReadingStage === 2) {
             let allCorrect = true;
             for (let i = 0; i < currentStage2Data.length; i++) {
-                let selected = document.querySelector(`input[name="stage2-option-${i}"]:checked`);
-                // 统一转为字符串比对，消除数组引用不一致的问题
-                let userVal = selected ? String(selected.value) : "";
-                let correctVal = String(currentStage2Data[i].correct);
-                
-                if (userVal !== correctVal) {
+                let selected = document.querySelector(`input[name="s2-${i}"]:checked`);
+                let userVal = selected ? selected.value : "";
+                let correctArr = currentStage2Data[i].correct; // 这是一个数组 ['含义']
+
+                // 核心修复：检查正确答案数组是否包含用户选择的值
+                if (!userVal || !correctArr.includes(userVal)) {
                     allCorrect = false;
+                    console.log(`第 ${i} 组判分失败: 用户选[${userVal}], 正确库[${correctArr}]`);
                     break;
                 }
             }
+    
             if (allCorrect) {
                 feedbackEl.innerText = "🎉 Stage 2 Passed!";
                 feedbackEl.style.color = "#16a34a";
                 currentReadingStage = 3;
             } else {
-                feedbackEl.innerText = "❌ Incorrect! Resetting to Stage 2.";
+                feedbackEl.innerText = "❌ Incorrect! Try again.";
                 feedbackEl.style.color = "#dc2626";
-                currentReadingStage = 2;
+                // 这里不要重置currentReadingStage，保持在2让用户继续点，或者根据需求决定是否重置
             }
         } 
         // --- Stage 3: 整体翻译 ---

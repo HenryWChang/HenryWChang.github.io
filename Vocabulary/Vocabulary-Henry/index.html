@@ -730,30 +730,30 @@
     }
 
     function showExpandStructure() {
-        if (localExpandWords.length === 0) return;
-        let item = localExpandWords[expandCurrentIndex];
-        
-        // 统一格式化函数：若值为空则显示破折号
-        const formatVal = (val) => (!val || val === "none") ? "–" : val;
-        
-        // 格式化蓝色释义部分：若值为空显示破折号，否则用尖括号包裹
-        const formatMeanings = (arr) => {
-            if (!arr || arr.length === 0) return "–";
-            return `<span style="color:#0284c7"><${arr.join(' / ')}></span>`;
-        };
+    if (localExpandWords.length === 0) return;
+    let item = localExpandWords[expandCurrentIndex];
+    
+    // 统一格式化显示：若值为空则显示破折号
+    const formatVal = (val) => (!val || val === "none") ? "–" : val;
+    
+    // 格式化释义部分：如果有释义数组，则显示释义并用尖括号包裹，否则显示破折号
+    const formatMeanings = (arr) => {
+        if (!arr || arr.length === 0) return "–";
+        return `<span style="color:#0284c7"><${arr.join(' / ')}></span>`;
+    };
 
-        let html = `
-            <div style="text-align: left; font-size: 16px;">
-                <strong>Basic:</strong> ${formatVal(item.basic)}<br/>
-                <strong>Root:</strong> ${formatVal(item.root)} ${formatMeanings(item.root_meanings)}<br/>
-                <strong>Prefix:</strong> ${formatVal(item.prefix)} ${formatMeanings(item.prefix_meanings)}<br/>
-                <strong>Suffix:</strong> ${formatVal(item.suffix)} ${formatMeanings(item.suffix_meanings)}
-            </div>
-        `;
-        
-        document.getElementById('expand-structure').innerHTML = html;
-        document.getElementById('expand-structure').style.display = 'block';
-    }
+    let html = `
+        <div style="text-align: left; font-size: 16px;">
+            <strong>Basic:</strong> ${formatVal(item.basic)}<br/>
+            <strong>Root:</strong> ${formatVal(item.root)} ${formatMeanings(item.root_meanings)}<br/>
+            <strong>Prefix:</strong> ${formatVal(item.prefix)} ${formatMeanings(item.prefix_meanings)}<br/>
+            <strong>Suffix:</strong> ${formatVal(item.suffix)} ${formatMeanings(item.suffix_meanings)}
+        </div>
+    `;
+    
+    document.getElementById('expand-structure').innerHTML = html;
+    document.getElementById('expand-structure').style.display = 'block';
+}
 
     function nextExpandWord() {
         if(localExpandWords.length > 0) {

@@ -726,28 +726,26 @@
     function showExpandStructure() {
     if (localExpandWords.length === 0) return;
     let item = localExpandWords[expandCurrentIndex];
+
+    // 格式化构件名称：如果是 'none' 或空，显示破折号
+    const formatVal = (val) => (!val || val === "none") ? "–" : val;
     
-    // 内存查表工具：去对应的全局数组里寻找匹配 word 的项
-    const findMeaningInMemory = (targetWord, sourceArray) => {
-        if (!targetWord || targetWord === "none") return "–";
-        const found = sourceArray.find(obj => obj.word === targetWord);
-        return found ? `<span style="color:#0284c7"><${found.meaning}></span>` : "–";
+    // 格式化释义部分：直接使用后端视图聚合好的数组字段
+    const formatMeanings = (arr) => {
+        // 如果数组不存在或为空，显示破折号
+        if (!arr || (Array.isArray(arr) && arr.length === 0)) return "–";
+        // 如果是数组，直接 join 显示；如果是字符串，直接显示
+        let content = Array.isArray(arr) ? arr.join(' / ') : arr;
+        return `<span style="color:#0284c7"><${content}></span>`;
     };
 
-    // 格式化构件名称显示
-    const formatVal = (val) => (!val || val === "none") ? "–" : val;
-
-    // 获取对应的释义（这里我们调用内存查表）
-    let rootMeaning = findMeaningInMemory(item.root, localRootWords);
-    let prefixMeaning = findMeaningInMemory(item.prefix, localPrefixWords);
-    let suffixMeaning = findMeaningInMemory(item.suffix, localSuffixWords);
-
+    // 这里直接使用你后端视图提供的正确字段名：root_meanings, prefix_meanings, suffix_meanings
     let html = `
         <div style="text-align: left; font-size: 16px;">
             <strong>Basic:</strong> ${formatVal(item.basic)}<br/>
-            <strong>Root:</strong> ${formatVal(item.root)} ${rootMeaning}<br/>
-            <strong>Prefix:</strong> ${formatVal(item.prefix)} ${prefixMeaning}<br/>
-            <strong>Suffix:</strong> ${formatVal(item.suffix)} ${suffixMeaning}
+            <strong>Root:</strong> ${formatVal(item.root)} ${formatMeanings(item.root_meanings)}<br/>
+            <strong>Prefix:</strong> ${formatVal(item.prefix)} ${formatMeanings(item.prefix_meanings)}<br/>
+            <strong>Suffix:</strong> ${formatVal(item.suffix)} ${formatMeanings(item.suffix_meanings)}
         </div>
     `;
     

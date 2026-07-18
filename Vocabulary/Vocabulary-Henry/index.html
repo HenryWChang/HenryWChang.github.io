@@ -840,28 +840,39 @@
         
         if (!isReadingSubmitted) {
             isReadingSubmitted = true;
+            // ... 在 submitOrNextReadingTest 函数内
+        if (currentReadingStage === 1) {
+            let checked = Array.from(document.querySelectorAll('input[name="stage1-option"]:checked')).map(el => el.value);
             
-            if (currentReadingStage === 1) {
-                let checked = Array.from(document.querySelectorAll('input[name="stage1-option"]:checked')).map(el => el.value);
-                
-                let expected = [];
-                if (currentItem.basic !== "none") expected.push(currentItem.basic);
-                if (currentItem.root !== "none") expected.push(currentItem.root);
-                if (currentItem.prefix !== "none") expected.push(currentItem.prefix);
-                if (currentItem.suffix !== "none") expected.push(currentItem.suffix);
-
-                // 判断是否完全勾选了正确的构件，且没有多选或少选
-                let isCorrect = checked.length === expected.length && checked.every(v => expected.includes(v));
-                if (isCorrect) {
-                    feedbackEl.innerText = "🎉 Stage 1 Passed! Jump to Stage 2.";
-                    feedbackEl.style.color = "#16a34a";
-                    currentReadingStage = 2;
-                } else {
-                    feedbackEl.innerText = "❌ Incorrect components checked! Try Stage 1 again.";
-                    feedbackEl.style.color = "#dc2626";
-                    currentReadingStage = 1;
-                }
-            } 
+            // 强制清洗连字符的函数
+            const clean = (str) => str.replace(/-/g, '');
+            
+            let expected = [];
+            if (currentItem.basic !== "none") expected.push(currentItem.basic);
+            if (currentItem.root !== "none") expected.push(currentItem.root);
+            if (currentItem.prefix !== "none") expected.push(currentItem.prefix);
+            if (currentItem.suffix !== "none") expected.push(currentItem.suffix);
+        
+            // 将数据库取出的预期值和用户勾选的值都去掉连字符后比对
+            let cleanExpected = expected.map(clean);
+            let cleanChecked = checked.map(clean);
+        
+            // 确保长度一致且每个元素都匹配
+            let isCorrect = cleanChecked.length === cleanExpected.length && 
+                            cleanChecked.every(v => cleanExpected.includes(v));
+        
+            if (isCorrect) {
+                feedbackEl.innerText = "🎉 Stage 1 Passed! Jump to Stage 2.";
+                feedbackEl.style.color = "#16a34a";
+                currentReadingStage = 2;
+            } else {
+                feedbackEl.innerText = "❌ Incorrect components checked! Try Stage 1 again.";
+                feedbackEl.style.color = "#dc2626";
+                currentReadingStage = 1;
+            }
+        }
+            // ... 在 submitOrNextReadingTest 函数内
+          
             else if (currentReadingStage === 2) {
                 let allCorrect = true;
                 for (let i = 0; i < currentStage2Data.length; i++) {

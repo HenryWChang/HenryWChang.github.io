@@ -794,36 +794,42 @@
             });
         } 
         else if (currentReadingStage === 2) {
-            document.getElementById('reading-step-badge').innerText = "Stage 2: Components Meaning (并列单选)";
-            document.getElementById('reading-question-text').innerText = "Select the correct meaning for each component:";
+            document.getElementById('reading-step-badge').innerText = "Stage 2: Components Meaning";
             
             currentStage2Data = [];
-            if(currentItem.basic !== "none") currentStage2Data.push({ type: 'basic', val: currentItem.basic, correct: currentItem.meaning });
-            if(currentItem.root !== "none") currentStage2Data.push({ type: 'root', val: currentItem.root, correct: currentItem.root_m });
-            if(currentItem.prefix !== "none") currentStage2Data.push({ type: 'prefix', val: currentItem.prefix, correct: currentItem.prefix_m });
-            if(currentItem.suffix !== "none") currentStage2Data.push({ type: 'suffix', val: currentItem.suffix, correct: currentItem.suffix_m });
+            // 辅助：确保获取到的是字符串，而不是数组
+            const getStr = (val) => Array.isArray(val) ? val[0] : val;
+
+            const addComp = (type, val, correctM) => {
+                let m = getStr(correctM);
+                if (val && val !== "none" && m && m !== "none") {
+                    currentStage2Data.push({ type, val, correct: m });
+                }
+            };
+
+            addComp('basic', currentItem.basic, currentItem.meaning);
+            addComp('root', currentItem.root, currentItem.root_m);
+            addComp('prefix', currentItem.prefix, currentItem.prefix_m);
+            addComp('suffix', currentItem.suffix, currentItem.suffix_m);
 
             currentStage2Data.forEach((comp, cIdx) => {
-                let subPool = localExpandWords.map(w => [w.meaning, w.root_m, w.prefix_m, w.suffix_m]).flat().filter(m => m && m !== comp.correct);
-                subPool = subPool.concat(fallbackMeanings);
-                subPool.sort(() => 0.5 - Math.random());
-                let subChoices = subPool.slice(0, 5);
-                subChoices.push(comp.correct);
-                subChoices.sort(() => 0.5 - Math.random());
+                // 确保 subPool 里没有 null/undefined，且没有正确答案
+                let subPool = localExpandWords.map(w => [w.meaning, w.root_m, w.prefix_m, w.suffix_m])
+                                             .flat()
+                                             .map(getStr)
+                                             .filter(m => m && m !== "none" && m !== comp.correct);
+                
+                subPool = [...new Set(subPool)].sort(() => 0.5 - Math.random()).slice(0, 5);
+                let subChoices = [...subPool, comp.correct].sort(() => 0.5 - Math.random());
 
-                let selectHtml = `<div style="margin-bottom: 20px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 10px;">
-                    <div style="font-weight: bold; color: #0284c7; margin-bottom: 5px;">Component: ${comp.val} (${comp.type.toUpperCase()})</div>`;
-                subChoices.forEach((ch, oIdx) => {
-                    selectHtml += `
-                        <label class="option-item" style="margin: 4px 0;">
-                            <input type="radio" name="stage2-option-${cIdx}" value="${ch}"> ${oIdx + 1}. ${ch}
-                        </label>
-                    `;
+                let selectHtml = `<div style="margin-bottom: 20px;">
+                    <div style="font-weight: bold; color: #0284c7;">Component: ${comp.val} (${comp.type.toUpperCase()})</div>`;
+                subChoices.forEach((ch) => {
+                    selectHtml += `<label class="option-item"><input type="radio" name="stage2-option-${cIdx}" value="${ch}"> ${ch}</label>`;
                 });
-                selectHtml += `</div>`;
-                container.innerHTML += selectHtml;
+                container.innerHTML += selectHtml + `</div>`;
             });
-        } 
+        }
         else if (currentReadingStage === 3) {
             document.getElementById('reading-step-badge').innerText = "Stage 3: Whole Word Translation (单选题)";
             document.getElementById('reading-question-text').innerText = "Select the correct translation for the entire word:";
@@ -900,17 +906,21 @@
             let allCorrect = true;
             for (let i = 0; i < currentStage2Data.length; i++) {
                 let selected = document.querySelector(`input[name="stage2-option-${i}"]:checked`);
-                if (!selected || selected.value !== currentStage2Data[i].correct) {
+                // 统一转为字符串比对，消除数组引用不一致的问题
+                let userVal = selected ? String(selected.value) : "";
+                let correctVal = String(currentStage2Data[i].correct);
+                
+                if (userVal !== correctVal) {
                     allCorrect = false;
                     break;
                 }
             }
             if (allCorrect) {
-                feedbackEl.innerText = "🎉 Stage 2 Passed! Jump to Final Stage.";
+                feedbackEl.innerText = "🎉 Stage 2 Passed!";
                 feedbackEl.style.color = "#16a34a";
                 currentReadingStage = 3;
             } else {
-                feedbackEl.innerText = "❌ Some meanings are incorrect! Resetting to Stage 2.";
+                feedbackEl.innerText = "❌ Incorrect! Resetting to Stage 2.";
                 feedbackEl.style.color = "#dc2626";
                 currentReadingStage = 2;
             }

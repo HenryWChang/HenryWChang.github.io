@@ -735,35 +735,28 @@
     if (localExpandWords.length === 0) return;
     let item = localExpandWords[expandCurrentIndex];
     
-    // 核心匹配函数：兼容 String 和 Array
-    const getMeaningFromLibrary = (compRaw, libraryArray) => {
-        // 如果数据为空，直接返回
-        if (!compRaw || compRaw === "none") return "–";
-
-        // 将输入标准化为数组（如果是字符串则转为数组）
-        const namesToMatch = (Array.isArray(compRaw) ? compRaw : [compRaw])
-            .map(n => String(n).replace(/-/g, '').toLowerCase());
-
-        // 去库里找匹配项
-        const found = libraryArray.find(obj => {
-            if (!obj.word) return false;
-            // 将库里的字段也拆成数组并去除横杠
-            const dbWords = String(obj.word).replace(/-/g, '').toLowerCase().split('/');
-            // 只要输入数组里的任何一个词，在库里能匹配上，就成功
-            return namesToMatch.some(n => dbWords.includes(n));
-        });
-        
-        return found ? `<span style="color:#0284c7"><${found.meaning}></span>` : "–";
+    // 核心改进：直接从视图传回的聚合字段 root_meanings, prefix_meanings, suffix_meanings 读取
+    // 这些字段是你在 Supabase 视图中通过 array_agg 定义的，且前端在 initData 中已将其加载到 localExpandWords 中
+    const formatMeanings = (meaningsArray) => {
+        if (!meaningsArray || meaningsArray.length === 0) return "–";
+        // 数组转字符串显示
+        return `<span style="color:#0284c7"><${meaningsArray.join(' / ')}></span>`;
     };
 
-    const formatVal = (val) => (!val || val === "none") ? "–" : (Array.isArray(val) ? val.join(', ') : val);
+    const formatVal = (val) => (!val || val === "none") ? "–" : val;
+
+    // 映射逻辑：直接读取视图聚合好的数据
+    // 注意：expand 数据现在直接包含了 root_meanings 等数组，无需额外查表
+    let rootM = formatMeanings(item.root_meanings);
+    let prefixM = formatMeanings(item.prefix_meanings);
+    let suffixM = formatMeanings(item.suffix_meanings);
 
     let html = `
         <div style="text-align: left; font-size: 16px;">
             <strong>Basic:</strong> ${formatVal(item.basic)}<br/>
-            <strong>Root:</strong> ${formatVal(item.root)} ${getMeaningFromLibrary(item.root, localRootWords)}<br/>
-            <strong>Prefix:</strong> ${formatVal(item.prefix)} ${getMeaningFromLibrary(item.prefix, localPrefixWords)}<br/>
-            <strong>Suffix:</strong> ${formatVal(item.suffix)} ${getMeaningFromLibrary(item.suffix, localSuffixWords)}
+            <strong>Root:</strong> ${formatVal(item.root)} ${rootM}<br/>
+            <strong>Prefix:</strong> ${formatVal(item.prefix)} ${prefixM}<br/>
+            <strong>Suffix:</strong> ${formatVal(item.suffix)} ${suffixM}
         </div>
     `;
     

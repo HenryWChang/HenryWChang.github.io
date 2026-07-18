@@ -693,25 +693,25 @@
     }
 
     function showExpandStructure() {
-        if(localExpandWords.length === 0) return;
-        let item = localExpandWords[expandCurrentIndex];
-        
-        let b = item.basic === "none" ? `<span class="none-font">none</span>` : item.basic;
-        let r = item.root === "none" ? `<span class="none-font">none</span>` : item.root;
-        let p = item.prefix === "none" ? `<span class="none-font">none</span>` : item.prefix;
-        let s = item.suffix === "none" ? `<span class="none-font">none</span>` : item.suffix;
+    if(localExpandWords.length === 0) return;
+    let item = localExpandWords[expandCurrentIndex];
+    
+    // 自动将数组转换为带分隔符的字符串
+    let rM = (item.root_meanings && item.root_meanings.length) ? item.root_meanings.join(' / ') : "none";
+    let pM = (item.prefix_meanings && item.prefix_meanings.length) ? item.prefix_meanings.join(' / ') : "none";
+    let sM = (item.suffix_meanings && item.suffix_meanings.length) ? item.suffix_meanings.join(' / ') : "none";
 
-        let html = `
-            <div style="text-align: left; font-size: 16px;">
-                <strong>Basic:</strong> ${b}<br/>
-                <strong>Root:</strong> ${r}<br/>
-                <strong>Prefix:</strong> ${p}<br/>
-                <strong>Suffix:</strong> ${s}
-            </div>
-        `;
-        document.getElementById('expand-structure').innerHTML = html;
-        document.getElementById('expand-structure').style.display = 'block';
-    }
+    let html = `
+        <div style="text-align: left; font-size: 16px;">
+            <strong>Basic:</strong> ${item.basic || 'none'}<br/>
+            <strong>Root:</strong> ${item.root || 'none'} <span style="color:#0284c7">(${rM})</span><br/>
+            <strong>Prefix:</strong> ${item.prefix || 'none'} <span style="color:#0284c7">(${pM})</span><br/>
+            <strong>Suffix:</strong> ${item.suffix || 'none'} <span style="color:#0284c7">(${sM})</span>
+        </div>
+    `;
+    document.getElementById('expand-structure').innerHTML = html;
+    document.getElementById('expand-structure').style.display = 'block';
+}
 
     function nextExpandWord() {
         if(localExpandWords.length > 0) {

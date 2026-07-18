@@ -796,13 +796,22 @@
             badge.innerText = "Stage 2: Components Meaning";
             question.innerText = "Select correct meaning for each component:";
             currentStage2Data = [];
-            
-            // 准备组件数据，增加过滤逻辑，确保只有确实存在的组件才会生成题目
+
+            // 1. 构建分类含义库，实现“同风格抽取”
+            const meaningPools = {
+                Root: localRootWords.map(w => w.meaning),
+                Prefix: localPrefixWords.map(w => w.meaning),
+                Suffix: localSuffixWords.map(w => w.meaning)
+            };
+
             const components = [];
             const addComp = (type, val, correctArr) => {
-                // 如果 val 不存在或为 'none'，或者 correctArr 不是数组且为空，则跳过
                 if (!val || val === "none" || !Array.isArray(correctArr) || correctArr.length === 0) return;
-                components.push({ type, val: Array.isArray(val) ? val[0] : val, correct: correctArr });
+                components.push({ 
+                    type, 
+                    val: Array.isArray(val) ? val[0] : val, 
+                    correct: correctArr 
+                });
             };
 
             addComp('Root', currentItem.root, currentItem.root_meanings);
@@ -810,20 +819,18 @@
             addComp('Suffix', currentItem.suffix, currentItem.suffix_meanings);
 
             currentStage2Data = components;
-            
-            // 为了让干扰项从“正确选项所在的库”中抽，我们构建一个所有含义的大池子
-            const allMeanings = [...new Set([
-                ...(currentItem.root_meanings || []),
-                ...(currentItem.prefix_meanings || []),
-                ...(currentItem.suffix_meanings || []),
-                ...fallbackMeanings
-            ])];
 
             components.forEach((comp, cIdx) => {
-                // 正确答案(取第一个) + 从所有含义库中随机抽取的 5 个干扰项
-                let distractors = allMeanings.filter(m => !comp.correct.includes(m))
-                                            .sort(() => 0.5 - Math.random())
-                                            .slice(0, 5);
+                // 2. 关键修改：根据组件类型从对应库抽取，而不是全混用
+                let pool = meaningPools[comp.type] || fallbackMeanings;
+                
+                // 过滤掉正确答案，并补足干扰项
+                let distractors = pool
+                    .filter(m => !comp.correct.includes(m))
+                    .sort(() => 0.5 - Math.random())
+                    .slice(0, 5);
+                
+                // 3. 合并并打乱
                 let options = [comp.correct[0], ...distractors].sort(() => 0.5 - Math.random());
                 
                 let html = `<div style="margin: 20px 0; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">

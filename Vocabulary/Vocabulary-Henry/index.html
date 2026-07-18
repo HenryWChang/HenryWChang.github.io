@@ -765,68 +765,52 @@
     function initReadingTestCard() {
     if (!localExpandWords || localExpandWords.length === 0) return;
 
-    // UI 文字同步
+    // 1. 同步 UI 文字
     let badge = document.getElementById('reading-step-badge');
     let question = document.getElementById('reading-question-text');
+    let container = document.getElementById('reading-options-container');
+    container.innerHTML = ""; // 必须先清空
+
     if (currentReadingStage === 1) {
         badge.innerText = "Stage 1: Components Check (多选题)";
         question.innerText = "Please select ALL components that form this word:";
-    } else if (currentReadingStage === 2) {
-        badge.innerText = "Stage 2: Components Meaning (并列单选)";
-        question.innerText = "Select the correct meaning for each component:";
-    } else if (currentReadingStage === 3) {
-        badge.innerText = "Stage 3: Whole Word Translation (单选题)";
-        question.innerText = "Select the correct translation for the entire word:";
-    }
-
-    isReadingSubmitted = false;
-    document.getElementById('reading-test-feedback').innerText = "";
-    document.getElementById('reading-test-feedback').style.color = "";
-    document.getElementById('reading-test-next-btn').innerText = "Submit (确认答案)";
-    
-    let currentItem = localExpandWords[readingTestIndex];
-    document.getElementById('reading-test-word').innerText = currentItem.word;
-    let container = document.getElementById('reading-options-container');
-    container.innerHTML = "";
-
-    // --- 渲染逻辑分支 (必须在函数内部) ---
-    if (currentReadingStage === 1) {
-        let expected = [];
-        const collectComponents = (data) => {
-            if (!data || data === "none") return;
-            Array.isArray(data) ? data.forEach(item => expected.push(item)) : expected.push(data);
-        };
-        collectComponents(currentItem.basic);
-        collectComponents(currentItem.root);
-        collectComponents(currentItem.prefix);
-        collectComponents(currentItem.suffix);
-
-        let distractorPool = [...new Set(localExpandWords.flatMap(w => [w.basic, w.root, w.prefix, w.suffix]).filter(x => x && x !== "none"))];
-        distractorPool = distractorPool.filter(item => !expected.includes(item)).concat(["-ly", "con-", "trans-", "sub-", "im-", "un-", "-tion", "-ment", "pre-", "-able"]);
-        
-        let choices = expected.concat(distractorPool.sort(() => 0.5 - Math.random()).slice(0, 6 - expected.length)).sort(() => 0.5 - Math.random());
-        choices.forEach(val => {
-            container.innerHTML += `<label class="option-item"><input type="checkbox" name="stage1-option" value="${val}"> ${val}</label>`;
-        });
+        // ... (保持你之前的 Stage 1 渲染逻辑) ...
     } 
     else if (currentReadingStage === 2) {
+        badge.innerText = "Stage 2: Components Meaning (并列单选)";
+        question.innerText = "Select the correct meaning for each component:";
+        
         currentStage2Data = [];
-        const getStr = (val) => Array.isArray(val) ? val[0] : val;
+        let currentItem = localExpandWords[readingTestIndex];
+        
+        // 关键检查：确保数据源存在
         const addComp = (type, val, correctM) => {
-            let m = getStr(correctM);
-            if (val && val !== "none" && m && m !== "none") currentStage2Data.push({ type, val, correct: m });
+            if (val && val !== "none" && correctM && correctM !== "none") {
+                currentStage2Data.push({ type, val, correct: correctM });
+            }
         };
+
         addComp('basic', currentItem.basic, currentItem.meaning);
         addComp('root', currentItem.root, currentItem.root_m);
         addComp('prefix', currentItem.prefix, currentItem.prefix_m);
         addComp('suffix', currentItem.suffix, currentItem.suffix_m);
 
-        currentStage2Data.forEach((comp, cIdx) => {
-            let subPool = [...new Set(localExpandWords.flatMap(w => [w.meaning, w.root_m, w.prefix_m, w.suffix_m]).map(getStr).filter(m => m && m !== "none" && m !== comp.correct))];
-            let subChoices = [...subPool.sort(() => 0.5 - Math.random()).slice(0, 5), comp.correct].sort(() => 0.5 - Math.random());
-            container.innerHTML += `<div style="margin-bottom: 20px;"><div style="font-weight: bold; color: #0284c7;">Component: ${comp.val} (${comp.type.toUpperCase()})</div>` + 
-                subChoices.map(ch => `<label class="option-item"><input type="radio" name="stage2-option-${cIdx}" value="${ch}"> ${ch}</label>`).join('') + `</div>`;
-        });
+        // 强制渲染检查
+        if (currentStage2Data.length === 0) {
+            container.innerHTML = "<p style='color:red;'>⚠️ 此单词无构件数据，请点击 Continue 跳过。</p>";
+        } else {
+            currentStage2Data.forEach((comp, cIdx) => {
+                let subPool = [...new Set(localExpandWords.flatMap(w => [w.meaning, w.root_m, w.prefix_m, w.suffix_m]).filter(m => m && m !== "none" && m !== comp.correct))];
+                let subChoices = [...subPool.sort(() => 0.5 - Math.random()).slice(0, 5), comp.correct].sort(() => 0.5 - Math.random());
+
+                let html = `<div style="margin-bottom: 25px; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">
+                    <div style="font-weight: bold; color: #0284c7; margin-bottom: 8px;">组件: ${comp.val} (${comp.type})</div>`;
+                subChoices.forEach(ch => {
+                    html += `<label class="option-item"><input type="radio" name="stage2-option-${cIdx}" value="${ch}"> ${ch}</label>`;
+                });
+                container.innerHTML += html + `</div>`;
+            });
+        }
     }
     else if (currentReadingStage === 3) {
         let pool = [...new Set(localExpandWords.map(w => w.meaning).filter(m => m !== currentItem.meaning).concat(fallbackMeanings))];
@@ -835,6 +819,11 @@
             container.innerHTML += `<label class="option-item"><input type="radio" name="stage3-option" value="${meaning}"> ${idx + 1}. ${meaning}</label>`;
         });
     }
+    // 基础状态重置
+    isReadingSubmitted = false;
+    document.getElementById('reading-test-feedback').innerText = "";
+    document.getElementById('reading-test-next-btn').innerText = "Submit (确认答案)";
+    document.getElementById('reading-test-word').innerText = localExpandWords[readingTestIndex].word;
 }
 
     function submitOrNextReadingTest() {

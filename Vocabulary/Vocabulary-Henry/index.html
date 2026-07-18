@@ -815,30 +815,34 @@
             };
 
             const components = [];
-            // 修复：只要有构件名称，即使没有含义数据也强制保留，防止题目丢失
+            
+            // 修复：只有当构件有实际值（且不是 "none"）时，才加入题目列表
             const addComp = (type, val, correctArr) => {
-                if (!val || val === "none") return;
+                // 如果 val 不存在、为空或为 "none"，直接忽略，不生成题目
+                if (!val || val === "none" || val.length === 0) return;
                 
-                // 给空释义提供一个安全占位，防止逻辑中断
+                // 将 val 统一处理为字符串显示
+                const displayVal = Array.isArray(val) ? val.join('/') : val;
                 const safeCorrectArr = (correctArr && correctArr.length > 0) ? correctArr : ["(无对应释义)"];
                 
                 components.push({ 
                     type, 
-                    val: Array.isArray(val) ? val[0] : val, 
+                    val: displayVal, 
                     correct: safeCorrectArr 
                 });
             };
 
+            // 只有存在这些字段时才调用
             addComp('Root', currentItem.root, currentItem.root_meanings);
             addComp('Prefix', currentItem.prefix, currentItem.prefix_meanings);
             addComp('Suffix', currentItem.suffix, currentItem.suffix_meanings);
 
             currentStage2Data = components;
 
+            // 循环遍历，有几个组件，就渲染几道题
             components.forEach((comp, cIdx) => {
                 let pool = meaningPools[comp.type] || fallbackMeanings;
                 
-                // 排除占位符和正确答案，避免干扰项冲突
                 let distractors = pool
                     .filter(m => !comp.correct.includes(m) && m !== "(无对应释义)")
                     .sort(() => 0.5 - Math.random())

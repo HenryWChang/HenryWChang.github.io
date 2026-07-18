@@ -834,17 +834,16 @@
     }
 
     function submitOrNextReadingTest() {
-        if (!localExpandWords || localExpandWords.length === 0) return;
-        let currentItem = localExpandWords[readingTestIndex];
-        let feedbackEl = document.getElementById('reading-test-feedback');
+    if (!localExpandWords || localExpandWords.length === 0) return;
+    let currentItem = localExpandWords[readingTestIndex];
+    let feedbackEl = document.getElementById('reading-test-feedback');
+    
+    if (!isReadingSubmitted) {
+        isReadingSubmitted = true;
         
-        if (!isReadingSubmitted) {
-            isReadingSubmitted = true;
-            // ... 在 submitOrNextReadingTest 函数内
+        // --- Stage 1: 构件比对 (已加入去连字符逻辑) ---
         if (currentReadingStage === 1) {
             let checked = Array.from(document.querySelectorAll('input[name="stage1-option"]:checked')).map(el => el.value);
-            
-            // 强制清洗连字符的函数
             const clean = (str) => str.replace(/-/g, '');
             
             let expected = [];
@@ -852,67 +851,66 @@
             if (currentItem.root !== "none") expected.push(currentItem.root);
             if (currentItem.prefix !== "none") expected.push(currentItem.prefix);
             if (currentItem.suffix !== "none") expected.push(currentItem.suffix);
-        
-            // 将数据库取出的预期值和用户勾选的值都去掉连字符后比对
+
             let cleanExpected = expected.map(clean);
             let cleanChecked = checked.map(clean);
-        
-            // 确保长度一致且每个元素都匹配
+
             let isCorrect = cleanChecked.length === cleanExpected.length && 
                             cleanChecked.every(v => cleanExpected.includes(v));
-        
+
             if (isCorrect) {
                 feedbackEl.innerText = "🎉 Stage 1 Passed! Jump to Stage 2.";
                 feedbackEl.style.color = "#16a34a";
                 currentReadingStage = 2;
             } else {
-                feedbackEl.innerText = "❌ Incorrect components checked! Try Stage 1 again.";
+                feedbackEl.innerText = "❌ Incorrect components! Try Stage 1 again.";
+                feedbackEl.style.color = "#dc2626";
+                currentReadingStage = 1;
+            }
+        } 
+        // --- Stage 2: 构件含义 ---
+        else if (currentReadingStage === 2) {
+            let allCorrect = true;
+            for (let i = 0; i < currentStage2Data.length; i++) {
+                let selected = document.querySelector(`input[name="stage2-option-${i}"]:checked`);
+                if (!selected || selected.value !== currentStage2Data[i].correct) {
+                    allCorrect = false;
+                    break;
+                }
+            }
+            if (allCorrect) {
+                feedbackEl.innerText = "🎉 Stage 2 Passed! Jump to Final Stage.";
+                feedbackEl.style.color = "#16a34a";
+                currentReadingStage = 3;
+            } else {
+                feedbackEl.innerText = "❌ Some meanings are incorrect! Resetting to Stage 2.";
+                feedbackEl.style.color = "#dc2626";
+                currentReadingStage = 2;
+            }
+        } 
+        // --- Stage 3: 整体翻译 ---
+        else if (currentReadingStage === 3) {
+            let selected = document.querySelector('input[name="stage3-option"]:checked');
+            if (selected && selected.value === currentItem.meaning) {
+                feedbackEl.innerText = "🏆 All Stages Cleared! Mastered this word.";
+                feedbackEl.style.color = "#16a34a";
+                currentReadingStage = "NEXT_WORD";
+            } else {
+                feedbackEl.innerText = "❌ Translation wrong! Back to Stage 1!";
                 feedbackEl.style.color = "#dc2626";
                 currentReadingStage = 1;
             }
         }
-            // ... 在 submitOrNextReadingTest 函数内
-          
-            else if (currentReadingStage === 2) {
-                let allCorrect = true;
-                for (let i = 0; i < currentStage2Data.length; i++) {
-                    let selected = document.querySelector(`input[name="stage2-option-${i}"]:checked`);
-                    if (!selected || selected.value !== currentStage2Data[i].correct) {
-                        allCorrect = false;
-                        break;
-                    }
-                }
-                if (allCorrect) {
-                    feedbackEl.innerText = "🎉 Stage 2 Passed! Jump to Final Stage.";
-                    feedbackEl.style.color = "#16a34a";
-                    currentReadingStage = 3;
-                } else {
-                    feedbackEl.innerText = "❌ Some meanings are incorrect! Resetting to Stage 2.";
-                    feedbackEl.style.color = "#dc2626";
-                    currentReadingStage = 2;
-                }
-            } 
-            else if (currentReadingStage === 3) {
-                let selected = document.querySelector('input[name="stage3-option"]:checked');
-                if (selected && selected.value === currentItem.meaning) {
-                    feedbackEl.innerText = "🏆 All Stages Cleared! Mastered this word.";
-                    feedbackEl.style.color = "#16a34a";
-                    currentReadingStage = "NEXT_WORD";
-                } else {
-                    feedbackEl.innerText = "❌ Final translation wrong! Dropping back to Stage 1!";
-                    feedbackEl.style.color = "#dc2626";
-                    currentReadingStage = 1;
-                }
-            }
-            document.getElementById('reading-test-next-btn').innerText = "Continue (继续)";
-        } else {
-            if (currentReadingStage === "NEXT_WORD") {
-                currentReadingStage = 1;
-                readingTestIndex = (readingTestIndex + 1) % localExpandWords.length;
-            }
-            initReadingTestCard();
+        document.getElementById('reading-test-next-btn').innerText = "Continue (继续)";
+    } else {
+        // --- 逻辑分支：提交过后点击“Continue” ---
+        if (currentReadingStage === "NEXT_WORD") {
+            currentReadingStage = 1;
+            readingTestIndex = (readingTestIndex + 1) % localExpandWords.length;
         }
+        initReadingTestCard();
     }
+}
     
     window.onload = initData;
   </script>

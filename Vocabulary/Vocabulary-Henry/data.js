@@ -154,6 +154,6 @@ async function loadAllVocabulary() {
         window.henryExpandData = (typeof henryExpandCustomWords !== 'undefined' && henryExpandCustomWords.length > 0) 
             ? henryExpandCustomWords 
             : henryExpandFallbackWords;
-
-        }
+        console.log("💾 [Gateway] 离线备份数据已成功挂载！降级方案就绪。");
+    }
 }

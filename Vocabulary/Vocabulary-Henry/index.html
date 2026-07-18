@@ -841,19 +841,29 @@
     if (!isReadingSubmitted) {
         isReadingSubmitted = true;
         
-        // --- Stage 1: 构件比对 (已加入去连字符逻辑) ---
+        // --- Stage 1: 构件比对 (更强健的防御版本) ---
         if (currentReadingStage === 1) {
             let checked = Array.from(document.querySelectorAll('input[name="stage1-option"]:checked')).map(el => el.value);
-            const clean = (str) => str.replace(/-/g, '');
+            
+            // 更安全的清理函数：确保输入必须是字符串，如果是其他类型则转为空串
+            const clean = (val) => {
+                if (typeof val !== 'string') return '';
+                return val.replace(/-/g, '');
+            };
             
             let expected = [];
-            if (currentItem.basic !== "none") expected.push(currentItem.basic);
-            if (currentItem.root !== "none") expected.push(currentItem.root);
-            if (currentItem.prefix !== "none") expected.push(currentItem.prefix);
-            if (currentItem.suffix !== "none") expected.push(currentItem.suffix);
+            // 确保只有当值存在且为字符串时才 push
+            if (typeof currentItem.basic === 'string' && currentItem.basic !== "none") expected.push(currentItem.basic);
+            if (typeof currentItem.root === 'string' && currentItem.root !== "none") expected.push(currentItem.root);
+            if (typeof currentItem.prefix === 'string' && currentItem.prefix !== "none") expected.push(currentItem.prefix);
+            if (typeof currentItem.suffix === 'string' && currentItem.suffix !== "none") expected.push(currentItem.suffix);
 
             let cleanExpected = expected.map(clean);
             let cleanChecked = checked.map(clean);
+
+            // 比对前移除空字符串干扰（确保不会因为 "none" 或空值导致比对失败）
+            cleanExpected = cleanExpected.filter(s => s !== "");
+            cleanChecked = cleanChecked.filter(s => s !== "");
 
             let isCorrect = cleanChecked.length === cleanExpected.length && 
                             cleanChecked.every(v => cleanExpected.includes(v));

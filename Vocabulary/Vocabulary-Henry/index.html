@@ -738,18 +738,35 @@
     // 核心匹配逻辑：直接参考 Test The Reading 的数据源逻辑
     // 通过名称（如 ann-）在全局库中精准查找含义
     const getCorrectMeaning = (compName, libraryArray) => {
-        if (!compName || compName === "none") return "–";
+    // 1. 守卫检查：防止空值导致的崩溃。
+    // 如果数据库里的某个扩展字段（比如 prefix）是 "none" 或 null，直接返回 "–"，避免后续运算。
+    if (!compName || compName === "none") return "–";
+    
+    // 2. 核心逻辑对照：模糊比对的“预处理”
+    // 你 Test The Reading 的成功，依赖于能识别 "agri-" 和 "agri" 为同一词根。
+    // 这行代码把所有输入（无论是数组还是字符串）统一标准化，把 "-" 全部切掉，转为小写。
+    // 这保证了即便数据源格式不统一，也能在下一步比对上。
+    const cleanName = String(compName).replace(/-/g, '').toLowerCase();
+
+    // 3. 遍历库（这是最关键的一步）：
+    // 这里 libraryArray 就是你传入的 localRootWords 等全局数组。
+    // 它在执行 Array.find，这和你 Test The Reading 中遍历寻找匹配项的逻辑是完全一致的。
+    const found = libraryArray.find(obj => {
         
-        // 这里的逻辑与 Test The Reading 中提取正确答案的逻辑完全一致
-        // 将 item.root 这样的字符串与库里的 word 进行模糊匹配
-        const found = libraryArray.find(obj => {
-            const dbWords = String(obj.word).replace(/-/g, '').toLowerCase().split('/');
-            const cleanName = String(compName).replace(/-/g, '').toLowerCase();
-            return dbWords.includes(cleanName);
-        });
+        // 4. 对数据库字段的“解码”：
+        // 你的数据库词根字段存的是 "agri-/agro-/agr-" 这种合并字符串。
+        // 这行代码同样去掉了横杠，并以 "/" 为切分点，将其拆成数组 ['agri', 'agro', 'agr']。
+        // 这样数据库中的每一个条目，都变成了可被搜索的“词根库”。
+        const dbWords = String(obj.word).replace(/-/g, '').toLowerCase().split('/');
         
-        return found ? `<span style="color:#0284c7"><${found.meaning}></span>` : "–";
-    };
+        // 5. 命中判定：
+        // 检查用户输入的词根（cleanName）是否在这组数据库词根（dbWords）中。
+        // 一旦命中，立即返回对应的 meaning。
+        return dbWords.includes(cleanName);
+    });
+    
+    return found ? `<span style="color:#0284c7"><${found.meaning}></span>` : "–";
+};
 
     const formatVal = (val) => (!val || val === "none") ? "–" : val;
 

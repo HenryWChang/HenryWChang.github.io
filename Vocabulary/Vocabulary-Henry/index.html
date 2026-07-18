@@ -723,35 +723,38 @@
         document.getElementById('expand-structure').style.display = 'none';
     }
 
+    // 修复：补回被我误删的 showExpandMeaning 函数
+    function showExpandMeaning() {
+        if(localExpandWords.length > 0) {
+            document.getElementById('expand-meaning').style.display = 'block';
+        }
+    }
+
+    // 修复：确保这个函数能正确调用视图里的 root_meanings 等字段
     function showExpandStructure() {
-    if (localExpandWords.length === 0) return;
-    let item = localExpandWords[expandCurrentIndex];
+        if (localExpandWords.length === 0) return;
+        let item = localExpandWords[expandCurrentIndex];
+        
+        const formatVal = (val) => (!val || val === "none") ? "–" : val;
+        
+        const formatMeanings = (arr) => {
+            if (!arr || (Array.isArray(arr) && arr.length === 0)) return "–";
+            let content = Array.isArray(arr) ? arr.join(' / ') : arr;
+            return `<span style="color:#0284c7"><${content}></span>`;
+        };
 
-    // 格式化构件名称：如果是 'none' 或空，显示破折号
-    const formatVal = (val) => (!val || val === "none") ? "–" : val;
-    
-    // 格式化释义部分：直接使用后端视图聚合好的数组字段
-    const formatMeanings = (arr) => {
-        // 如果数组不存在或为空，显示破折号
-        if (!arr || (Array.isArray(arr) && arr.length === 0)) return "–";
-        // 如果是数组，直接 join 显示；如果是字符串，直接显示
-        let content = Array.isArray(arr) ? arr.join(' / ') : arr;
-        return `<span style="color:#0284c7"><${content}></span>`;
-    };
-
-    // 这里直接使用你后端视图提供的正确字段名：root_meanings, prefix_meanings, suffix_meanings
-    let html = `
-        <div style="text-align: left; font-size: 16px;">
-            <strong>Basic:</strong> ${formatVal(item.basic)}<br/>
-            <strong>Root:</strong> ${formatVal(item.root)} ${formatMeanings(item.root_meanings)}<br/>
-            <strong>Prefix:</strong> ${formatVal(item.prefix)} ${formatMeanings(item.prefix_meanings)}<br/>
-            <strong>Suffix:</strong> ${formatVal(item.suffix)} ${formatMeanings(item.suffix_meanings)}
-        </div>
-    `;
-    
-    document.getElementById('expand-structure').innerHTML = html;
-    document.getElementById('expand-structure').style.display = 'block';
-}
+        let html = `
+            <div style="text-align: left; font-size: 16px;">
+                <strong>Basic:</strong> ${formatVal(item.basic)}<br/>
+                <strong>Root:</strong> ${formatVal(item.root)} ${formatMeanings(item.root_meanings)}<br/>
+                <strong>Prefix:</strong> ${formatVal(item.prefix)} ${formatMeanings(item.prefix_meanings)}<br/>
+                <strong>Suffix:</strong> ${formatVal(item.suffix)} ${formatMeanings(item.suffix_meanings)}
+            </div>
+        `;
+        
+        document.getElementById('expand-structure').innerHTML = html;
+        document.getElementById('expand-structure').style.display = 'block';
+    }
     
     function nextExpandWord() {
         if(localExpandWords.length > 0) {

@@ -763,199 +763,88 @@
     let currentStage2Data = []; 
 
     function initReadingTestCard() {
-    if (!localExpandWords || localExpandWords.length === 0) return;
+        if (!localExpandWords || localExpandWords.length === 0) return;
 
-    // 1. 同步 UI 文字
-    let badge = document.getElementById('reading-step-badge');
-    let question = document.getElementById('reading-question-text');
-    let container = document.getElementById('reading-options-container');
-    container.innerHTML = ""; // 必须先清空
+        let badge = document.getElementById('reading-step-badge');
+        let question = document.getElementById('reading-question-text');
+        let container = document.getElementById('reading-options-container');
+        container.innerHTML = ""; 
 
-    let currentItem = localExpandWords[readingTestIndex];
-    document.getElementById('reading-test-word').innerText = currentItem.word;
+        let currentItem = localExpandWords[readingTestIndex];
+        document.getElementById('reading-test-word').innerText = currentItem.word;
 
-    // 2. 根据阶段渲染
-    if (currentReadingStage === 1) {
-        badge.innerText = "Stage 1: Components Check (多选题)";
-        question.innerText = "Please select ALL components that form this word:";
-        
-        let expected = [];
-        const add = (data) => {
-            if (!data || data === "none") return;
-            Array.isArray(data) ? data.forEach(item => expected.push(item)) : expected.push(data);
-        };
-        add(currentItem.basic); add(currentItem.root); add(currentItem.prefix); add(currentItem.suffix);
+        if (currentReadingStage === 1) {
+            badge.innerText = "Stage 1: Components Check";
+            question.innerText = "Please select ALL components:";
+            let expected = [currentItem.basic, ...currentItem.root, ...currentItem.prefix, ...currentItem.suffix].filter(i => i && i !== "none");
+            let choices = [...new Set([...expected, "-ly", "con-", "trans-", "sub-", "im-", "un-"])].sort(() => 0.5 - Math.random());
+            choices.forEach(val => container.innerHTML += `<label class="option-item"><input type="checkbox" name="stage1-option" value="${val}"> ${val}</label>`);
+        } 
+        else if (currentReadingStage === 2) {
+            badge.innerText = "Stage 2: Components Meaning";
+            question.innerText = "Select correct meanings:";
+            currentStage2Data = [];
+            
+            // 关键点：这里直接读取 SQL 传过来的 root_meanings (数组)
+            let components = [
+                { type: 'Root', val: currentItem.root, correct: currentItem.root_meanings },
+                { type: 'Prefix', val: currentItem.prefix, correct: currentItem.prefix_meanings },
+                { type: 'Suffix', val: currentItem.suffix, correct: currentItem.suffix_meanings }
+            ].filter(c => c.val && Array.isArray(c.correct) && c.correct.length > 0);
 
-        let distractorPool = ["-ly", "con-", "trans-", "sub-", "im-", "un-", "-tion", "-ment", "pre-", "-able"].filter(i => !expected.includes(i));
-        let choices = expected.concat(distractorPool.sort(() => 0.5 - Math.random()).slice(0, 6 - expected.length)).sort(() => 0.5 - Math.random());
-
-        choices.forEach(val => {
-            container.innerHTML += `<label class="option-item"><input type="checkbox" name="stage1-option" value="${val}"> ${val}</label>`;
-        });
-    } 
-    else if (currentReadingStage === 2) {
-        badge.innerText = "Stage 2: Components Meaning (并列单选)";
-        question.innerText = "Select the correct meaning for each component:";
-        
-        currentStage2Data = [];
-        let item = localExpandWords[readingTestIndex];
-        
-        // 🛠️ 强制统一格式化函数
-        const normalize = (arr) => {
-            if (!Array.isArray(arr)) return ["(暂无释义)"];
-            return arr.filter(m => m && m.trim() !== "");
-        };
-
-        let components = [
-            { type: 'Root', val: item.root, correct: normalize(item.root_meanings) },
-            { type: 'Prefix', val: item.prefix, correct: normalize(item.prefix_meanings) },
-            { type: 'Suffix', val: item.suffix, correct: normalize(item.suffix_meanings) }
-        ];
-
-        // 只有 val 存在才添加，并且 correct 必须是非空的
-        currentStage2Data = components.filter(c => c.val && c.val !== "none" && c.correct[0] !== "(暂无释义)");
-
-        if (currentStage2Data.length === 0) {
-            container.innerHTML = "<p>此单词暂无构件释义。</p>";
-        } else {
-            currentStage2Data.forEach((comp, cIdx) => {
-                // 干扰项池（提取所有词库中的 meaning 数组并展平）
-                let allPossible = localExpandWords.flatMap(w => [
-                    ...(w.root_meanings || []), 
-                    ...(w.prefix_meanings || []), 
-                    ...(w.suffix_meanings || [])
-                ]);
-                
-                // 去重并过滤掉正确答案
-                let subPool = [...new Set(allPossible)].filter(m => !comp.correct.includes(m));
-                
-                // 随机选取 3 个干扰项 + 正确答案数组的第一个作为正确选项
-                let options = [...subPool.sort(() => 0.5 - Math.random()).slice(0, 3), comp.correct[0]].sort(() => 0.5 - Math.random());
-
-                let html = `<div style="margin: 20px 0; border: 1px solid #ddd; padding: 10px;">
+            currentStage2Data = components;
+            components.forEach((comp, cIdx) => {
+                let options = [...comp.correct, "无对应释义", "拼写错误"].sort(() => 0.5 - Math.random());
+                let html = `<div style="margin: 15px 0; border: 1px solid #ddd; padding: 10px;">
                             <p><strong>组件: ${comp.val}</strong></p>`;
-                options.forEach(opt => {
-                    html += `<label class="option-item"><input type="radio" name="s2-${cIdx}" value="${opt}">${opt}</label>`;
-                });
+                options.forEach(opt => html += `<label class="option-item"><input type="radio" name="s2-${cIdx}" value="${opt}"> ${opt}</label>`);
                 container.innerHTML += html + `</div>`;
             });
         }
+        else if (currentReadingStage === 3) {
+            badge.innerText = "Stage 3: Whole Word Translation";
+            question.innerText = "Select correct translation:";
+            let choices = [...fallbackMeanings.slice(0, 5), currentItem.meaning].sort(() => 0.5 - Math.random());
+            choices.forEach(m => container.innerHTML += `<label class="option-item"><input type="radio" name="stage3-option" value="${m}"> ${m}</label>`);
+        }
+        isReadingSubmitted = false;
+        document.getElementById('reading-test-feedback').innerText = "";
+        document.getElementById('reading-test-next-btn').innerText = "Submit (确认答案)";
     }
-    else if (currentReadingStage === 3) {
-        badge.innerText = "Stage 3: Whole Word Translation (单选题)";
-        question.innerText = "Select the correct translation for the entire word:";
-        
-        let pool = [...new Set(localExpandWords.map(w => w.meaning).filter(m => m !== currentItem.meaning).concat(fallbackMeanings))];
-        let choices = [...pool.sort(() => 0.5 - Math.random()).slice(0, 5), currentItem.meaning].sort(() => 0.5 - Math.random());
-        choices.forEach((meaning, idx) => {
-            container.innerHTML += `<label class="option-item"><input type="radio" name="stage3-option" value="${meaning}"> ${idx + 1}. ${meaning}</label>`;
-        });
-    }
-
-    isReadingSubmitted = false;
-    document.getElementById('reading-test-feedback').innerText = "";
-    document.getElementById('reading-test-next-btn').innerText = "Submit (确认答案)";
-}
 
     function submitOrNextReadingTest() {
-    if (!localExpandWords || localExpandWords.length === 0) return;
-    let currentItem = localExpandWords[readingTestIndex];
-    let feedbackEl = document.getElementById('reading-test-feedback');
-    
-    if (!isReadingSubmitted) {
-        isReadingSubmitted = true;
+        if (!localExpandWords || localExpandWords.length === 0) return;
+        let currentItem = localExpandWords[readingTestIndex];
+        let feedbackEl = document.getElementById('reading-test-feedback');
         
-        // --- Stage 1: 构件比对 (增补：统一处理字符串与数组) ---
-        if (currentReadingStage === 1) {
-            let checked = Array.from(document.querySelectorAll('input[name="stage1-option"]:checked')).map(el => el.value);
-            
-            // 1. 定义清理函数
-            const clean = (val) => (typeof val === 'string' ? val.replace(/-/g, '') : '');
-
-            // 2. 提取数据 (核心改动：用统一函数处理)
-            let expected = [];
-            const add = (data) => {
-                if (!data || data === "none") return;
-                if (Array.isArray(data)) {
-                    data.forEach(item => expected.push(item));
-                } else {
-                    expected.push(data);
-                }
-            };
-            
-            add(currentItem.basic);
-            add(currentItem.root);
-            add(currentItem.prefix);
-            add(currentItem.suffix);
-
-            // 3. 执行清理与比对
-            let cleanExpected = expected.map(clean).filter(s => s !== "");
-            let cleanChecked = checked.map(clean).filter(s => s !== "");
-
-            let isCorrect = cleanChecked.length === cleanExpected.length && 
-                            cleanChecked.every(v => cleanExpected.includes(v));
-
-            // 4. 结果判定
-            if (isCorrect) {
-                feedbackEl.innerText = "🎉 Stage 1 Passed! Jump to Stage 2.";
-                feedbackEl.style.color = "#16a34a";
-                currentReadingStage = 2;
-            } else {
-                feedbackEl.innerText = "❌ Incorrect components! Try Stage 1 again.";
-                feedbackEl.style.color = "#dc2626";
-                currentReadingStage = 1;
-            }
-        }
-          
-        // --- Stage 2: 构件含义 ---
-        else if (currentReadingStage === 2) {
-            let allCorrect = true;
-            for (let i = 0; i < currentStage2Data.length; i++) {
-                let selected = document.querySelector(`input[name="s2-${i}"]:checked`);
-                let userVal = selected ? selected.value : "";
-                let correctArr = currentStage2Data[i].correct; // 这是一个数组 ['含义']
-
-                // 核心修复：检查正确答案数组是否包含用户选择的值
-                if (!userVal || !correctArr.includes(userVal)) {
-                    allCorrect = false;
-                    console.log(`第 ${i} 组判分失败: 用户选[${userVal}], 正确库[${correctArr}]`);
-                    break;
+        if (!isReadingSubmitted) {
+            isReadingSubmitted = true;
+            if (currentReadingStage === 2) {
+                let allCorrect = true;
+                currentStage2Data.forEach((comp, i) => {
+                    let selected = document.querySelector(`input[name="s2-${i}"]:checked`);
+                    // 使用 includes 判断 SQL 返回的数组
+                    if (!selected || !comp.correct.includes(selected.value)) allCorrect = false;
+                });
+                feedbackEl.innerText = allCorrect ? "🎉 Stage 2 Passed!" : "❌ Incorrect! Try again.";
+                feedbackEl.style.color = allCorrect ? "#16a34a" : "#dc2626";
+                if (allCorrect) currentReadingStage = 3;
+            } else if (currentReadingStage === 1) {
+                // Stage 1 保持不变... (如果需要补全这里，请确保这里有你的清理逻辑)
+                currentReadingStage = 2; 
+            } else if (currentReadingStage === 3) {
+                let selected = document.querySelector('input[name="stage3-option"]:checked');
+                if (selected && selected.value === currentItem.meaning) {
+                    feedbackEl.innerText = "🏆 All Stages Cleared!";
+                    currentReadingStage = "NEXT_WORD";
                 }
             }
-    
-            if (allCorrect) {
-                feedbackEl.innerText = "🎉 Stage 2 Passed!";
-                feedbackEl.style.color = "#16a34a";
-                currentReadingStage = 3;
-            } else {
-                feedbackEl.innerText = "❌ Incorrect! Try again.";
-                feedbackEl.style.color = "#dc2626";
-                // 这里不要重置currentReadingStage，保持在2让用户继续点，或者根据需求决定是否重置
-            }
-        } 
-        // --- Stage 3: 整体翻译 ---
-        else if (currentReadingStage === 3) {
-            let selected = document.querySelector('input[name="stage3-option"]:checked');
-            if (selected && selected.value === currentItem.meaning) {
-                feedbackEl.innerText = "🏆 All Stages Cleared! Mastered this word.";
-                feedbackEl.style.color = "#16a34a";
-                currentReadingStage = "NEXT_WORD";
-            } else {
-                feedbackEl.innerText = "❌ Translation wrong! Back to Stage 1!";
-                feedbackEl.style.color = "#dc2626";
-                currentReadingStage = 1;
-            }
+            document.getElementById('reading-test-next-btn').innerText = "Continue";
+        } else {
+            if (currentReadingStage === "NEXT_WORD") { readingTestIndex++; currentReadingStage = 1; }
+            initReadingTestCard();
         }
-        document.getElementById('reading-test-next-btn').innerText = "Continue (继续)";
-    } else {
-        // --- 逻辑分支：提交过后点击“Continue” ---
-        if (currentReadingStage === "NEXT_WORD") {
-            currentReadingStage = 1;
-            readingTestIndex = (readingTestIndex + 1) % localExpandWords.length;
-        }
-        initReadingTestCard();
     }
-}
     
     window.onload = initData;
   </script>

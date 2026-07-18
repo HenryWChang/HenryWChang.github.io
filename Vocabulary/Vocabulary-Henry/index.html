@@ -771,59 +771,68 @@
     let container = document.getElementById('reading-options-container');
     container.innerHTML = ""; // 必须先清空
 
+    let currentItem = localExpandWords[readingTestIndex];
+    document.getElementById('reading-test-word').innerText = currentItem.word;
+
+    // 2. 根据阶段渲染
     if (currentReadingStage === 1) {
         badge.innerText = "Stage 1: Components Check (多选题)";
         question.innerText = "Please select ALL components that form this word:";
-        // ... (保持你之前的 Stage 1 渲染逻辑) ...
+        
+        let expected = [];
+        const add = (data) => {
+            if (!data || data === "none") return;
+            Array.isArray(data) ? data.forEach(item => expected.push(item)) : expected.push(data);
+        };
+        add(currentItem.basic); add(currentItem.root); add(currentItem.prefix); add(currentItem.suffix);
+
+        let distractorPool = ["-ly", "con-", "trans-", "sub-", "im-", "un-", "-tion", "-ment", "pre-", "-able"].filter(i => !expected.includes(i));
+        let choices = expected.concat(distractorPool.sort(() => 0.5 - Math.random()).slice(0, 6 - expected.length)).sort(() => 0.5 - Math.random());
+
+        choices.forEach(val => {
+            container.innerHTML += `<label class="option-item"><input type="checkbox" name="stage1-option" value="${val}"> ${val}</label>`;
+        });
     } 
     else if (currentReadingStage === 2) {
         badge.innerText = "Stage 2: Components Meaning (并列单选)";
         question.innerText = "Select the correct meaning for each component:";
         
         currentStage2Data = [];
-        let currentItem = localExpandWords[readingTestIndex];
-        
-        // 关键检查：确保数据源存在
         const addComp = (type, val, correctM) => {
             if (val && val !== "none" && correctM && correctM !== "none") {
                 currentStage2Data.push({ type, val, correct: correctM });
             }
         };
-
         addComp('basic', currentItem.basic, currentItem.meaning);
         addComp('root', currentItem.root, currentItem.root_m);
         addComp('prefix', currentItem.prefix, currentItem.prefix_m);
         addComp('suffix', currentItem.suffix, currentItem.suffix_m);
 
-        // 强制渲染检查
-        if (currentStage2Data.length === 0) {
-            container.innerHTML = "<p style='color:red;'>⚠️ 此单词无构件数据，请点击 Continue 跳过。</p>";
-        } else {
-            currentStage2Data.forEach((comp, cIdx) => {
-                let subPool = [...new Set(localExpandWords.flatMap(w => [w.meaning, w.root_m, w.prefix_m, w.suffix_m]).filter(m => m && m !== "none" && m !== comp.correct))];
-                let subChoices = [...subPool.sort(() => 0.5 - Math.random()).slice(0, 5), comp.correct].sort(() => 0.5 - Math.random());
+        currentStage2Data.forEach((comp, cIdx) => {
+            let subPool = [...new Set(localExpandWords.flatMap(w => [w.meaning, w.root_m, w.prefix_m, w.suffix_m]).filter(m => m && m !== "none" && m !== comp.correct))];
+            let subChoices = [...subPool.sort(() => 0.5 - Math.random()).slice(0, 5), comp.correct].sort(() => 0.5 - Math.random());
 
-                let html = `<div style="margin-bottom: 25px; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;">
-                    <div style="font-weight: bold; color: #0284c7; margin-bottom: 8px;">组件: ${comp.val} (${comp.type})</div>`;
-                subChoices.forEach(ch => {
-                    html += `<label class="option-item"><input type="radio" name="stage2-option-${cIdx}" value="${ch}"> ${ch}</label>`;
-                });
-                container.innerHTML += html + `</div>`;
+            let html = `<div style="margin-bottom: 25px;"><div style="font-weight: bold; color: #0284c7;">${comp.val} (${comp.type})</div>`;
+            subChoices.forEach(ch => {
+                html += `<label class="option-item"><input type="radio" name="stage2-option-${cIdx}" value="${ch}"> ${ch}</label>`;
             });
-        }
-    }
+            container.innerHTML += html + `</div>`;
+        });
+    } 
     else if (currentReadingStage === 3) {
+        badge.innerText = "Stage 3: Whole Word Translation (单选题)";
+        question.innerText = "Select the correct translation for the entire word:";
+        
         let pool = [...new Set(localExpandWords.map(w => w.meaning).filter(m => m !== currentItem.meaning).concat(fallbackMeanings))];
         let choices = [...pool.sort(() => 0.5 - Math.random()).slice(0, 5), currentItem.meaning].sort(() => 0.5 - Math.random());
         choices.forEach((meaning, idx) => {
             container.innerHTML += `<label class="option-item"><input type="radio" name="stage3-option" value="${meaning}"> ${idx + 1}. ${meaning}</label>`;
         });
     }
-    // 基础状态重置
+
     isReadingSubmitted = false;
     document.getElementById('reading-test-feedback').innerText = "";
     document.getElementById('reading-test-next-btn').innerText = "Submit (确认答案)";
-    document.getElementById('reading-test-word').innerText = localExpandWords[readingTestIndex].word;
 }
 
     function submitOrNextReadingTest() {

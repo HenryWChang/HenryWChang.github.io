@@ -733,30 +733,35 @@
         if(localExpandWords.length === 0) return;
         let item = localExpandWords[expandCurrentIndex];
         
-        // 保持含义展示逻辑
-        const formatM = (arr) => (arr && arr.length) ? arr.join(' / ') : "–";
+        // 核心修改：只有当数组有内容时才返回带 span 的字符串，否则返回空
+        const formatM = (arr) => {
+            if (arr && arr.length > 0) {
+                return `<span style="color:#0284c7; font-size: 14px; font-style: italic;">(${arr.join(' / ')})</span>`;
+            }
+            return ""; // 没有数据时返回空，不显示破折号
+        };
         
-        // 新增：统一构件显示逻辑，如果为空或 "none" 则显示 none
+        // 构件显示逻辑
         const formatComp = (val) => (!val || val === "none" || (Array.isArray(val) && val.length === 0)) ? "none" : val;
 
         let html = `
             <div style="text-align: left; font-size: 15px; line-height: 1.8; color: #334155;">
                 <div style="margin-bottom: 4px;"><strong>Basic:</strong> ${item.basic || 'none'}</div>
                 <div style="margin-bottom: 4px;"><strong>Root:</strong> ${formatComp(item.root)} 
-                    <span style="color:#0284c7; font-size: 14px; font-style: italic;">${formatM(item.root_meanings)}</span>
+                    ${formatM(item.root_meanings)}
                 </div>
                 <div style="margin-bottom: 4px;"><strong>Prefix:</strong> ${formatComp(item.prefix)} 
-                    <span style="color:#0284c7; font-size: 14px; font-style: italic;">${formatM(item.prefix_meanings)}</span>
+                    ${formatM(item.prefix_meanings)}
                 </div>
                 <div><strong>Suffix:</strong> ${formatComp(item.suffix)} 
-                    <span style="color:#0284c7; font-size: 14px; font-style: italic;">${formatM(item.suffix_meanings)}</span>
+                    ${formatM(item.suffix_meanings)}
                 </div>
             </div>
         `;
         
         document.getElementById('expand-structure').innerHTML = html;
         document.getElementById('expand-structure').style.display = 'block';
-        document.getElementById('expand-structure').style.padding = '15px'; 
+        document.getElementById('expand-structure').style.padding = '15px';
     }
 
     function nextExpandWord() {

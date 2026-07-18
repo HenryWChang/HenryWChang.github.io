@@ -732,43 +732,45 @@
 
     // 修复：确保这个函数能正确调用视图里的 root_meanings 等字段
     function showExpandStructure() {
-    if (localExpandWords.length === 0) return;
-    let item = localExpandWords[expandCurrentIndex];
-    
-    // 调试工具：如果点击按钮后控制台什么都不打印，说明函数没触发；如果有内容，看看里面到底有没有你需要的数据
-    console.log("当前单词项数据:", item);
-
-    // 辅助函数：从对应的全局数组（词根/前缀/后缀表）中，通过匹配名字找到对应的 meaning
-    const getMeaningFromLibrary = (compName, libraryArray) => {
-        if (!compName || compName === "none") return "–";
+        if (localExpandWords.length === 0) return;
+        let item = localExpandWords[expandCurrentIndex];
         
-        // 核心逻辑：去对应的库里找 word 匹配的项
-        // 注意：这里要处理 compName 可能是数组的情况
-        let nameToFind = Array.isArray(compName) ? compName[0] : compName;
-        let found = libraryArray.find(obj => obj.word === nameToFind);
+        // 核心：模糊匹配逻辑
+        const getMeaningFromLibrary = (compName, libraryArray) => {
+            if (!compName || compName === "none") return "–";
+
+            // 1. 去除横杠并转小写，准备比对
+            const cleanName = compName.replace(/-/g, '').toLowerCase();
+
+            // 2. 遍历库，只要库里的 word 字段中包含这个词根（模糊包含），即视为匹配
+            const found = libraryArray.find(obj => {
+                // 将库里的 word 字段也处理成无横杠的小写字符串，并按 '/' 分割进行比对
+                const dbWords = obj.word.replace(/-/g, '').toLowerCase().split('/');
+                return dbWords.includes(cleanName);
+            });
+            
+            return found ? `<span style="color:#0284c7"><${found.meaning}></span>` : "–";
+        };
+
+        const formatVal = (val) => (!val || val === "none") ? "–" : val;
+
+        // 获取释义
+        let rootMeaning = getMeaningFromLibrary(item.root, localRootWords);
+        let prefixMeaning = getMeaningFromLibrary(item.prefix, localPrefixWords);
+        let suffixMeaning = getMeaningFromLibrary(item.suffix, localSuffixWords);
+
+        let html = `
+            <div style="text-align: left; font-size: 16px;">
+                <strong>Basic:</strong> ${formatVal(item.basic)}<br/>
+                <strong>Root:</strong> ${formatVal(item.root)} ${rootMeaning}<br/>
+                <strong>Prefix:</strong> ${formatVal(item.prefix)} ${prefixMeaning}<br/>
+                <strong>Suffix:</strong> ${formatVal(item.suffix)} ${suffixMeaning}
+            </div>
+        `;
         
-        return found ? `<span style="color:#0284c7"><${found.meaning}></span>` : "–";
-    };
-
-    const formatVal = (val) => (!val || val === "none") ? "–" : val;
-
-    // 传入对应的全局数组库：localRootWords, localPrefixWords, localSuffixWords
-    let rootMeaning = getMeaningFromLibrary(item.root, localRootWords);
-    let prefixMeaning = getMeaningFromLibrary(item.prefix, localPrefixWords);
-    let suffixMeaning = getMeaningFromLibrary(item.suffix, localSuffixWords);
-
-    let html = `
-        <div style="text-align: left; font-size: 16px;">
-            <strong>Basic:</strong> ${formatVal(item.basic)}<br/>
-            <strong>Root:</strong> ${formatVal(item.root)} ${rootMeaning}<br/>
-            <strong>Prefix:</strong> ${formatVal(item.prefix)} ${prefixMeaning}<br/>
-            <strong>Suffix:</strong> ${formatVal(item.suffix)} ${suffixMeaning}
-        </div>
-    `;
-    
-    document.getElementById('expand-structure').innerHTML = html;
-    document.getElementById('expand-structure').style.display = 'block';
-}
+        document.getElementById('expand-structure').innerHTML = html;
+        document.getElementById('expand-structure').style.display = 'block';
+    }
     
     function nextExpandWord() {
         if(localExpandWords.length > 0) {

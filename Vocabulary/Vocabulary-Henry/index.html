@@ -822,8 +822,16 @@
             container.innerHTML = "<div style='color:red;'>⚠️ 错误：未检索到任何构件数据。请检查该词的 root/prefix/suffix 字段是否正确填写了关键词。</div>";
         } else {
             currentStage2Data.forEach((comp, cIdx) => {
-                let subPool = ["含义A", "含义B", "含义C", "含义D"]; // 先写死，确保能出来
-                let subChoices = [...subPool, comp.correct].sort(() => 0.5 - Math.random());
+                // 使用所有词根、前缀、后缀的含义作为干扰池
+                let allMeanings = Object.values(window.henryMeaningMap || {}); 
+                // 如果字典没取到，就回退到使用当前所有 ExpandWords 的 meaning
+                if (allMeanings.length === 0) {
+                    allMeanings = localExpandWords.map(w => w.meaning);
+                }
+
+                // 排除正确答案，取 3 个作为干扰项
+                let subPool = [...new Set(allMeanings)].filter(m => m !== comp.correct && m !== "none");
+                let subChoices = [...subPool.sort(() => 0.5 - Math.random()).slice(0, 3), comp.correct].sort(() => 0.5 - Math.random());
 
                 let html = `<div style="margin: 20px 0; border: 1px solid #ddd; padding: 10px;">
                             <div style="font-weight: bold; color: #0284c7;">组件: ${comp.val} (${comp.type})</div>`;

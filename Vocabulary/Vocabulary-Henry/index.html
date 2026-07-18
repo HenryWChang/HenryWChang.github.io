@@ -354,35 +354,38 @@
         }
     }
 
-    function initTestCard() {
-        if (!localWords || localWords.length === 0) return;
-        isAnswerSubmitted = false;
-        document.getElementById('test-feedback').innerText = "";
-        document.getElementById('test-feedback').style.color = "";
-        document.getElementById('test-next-btn').innerText = "Submit (确认答案)";
+    function initReadingTestCard() {
+        if (!localExpandWords || localExpandWords.length === 0) return;
         
-        let currentWord = localWords[testIndex];
-        document.getElementById('test-word').innerText = currentWord.word;
+        // --- 核心修复：强制根据 currentReadingStage 同步 UI 文字 ---
+        let badge = document.getElementById('reading-step-badge');
+        let question = document.getElementById('reading-question-text');
         
-        let pool = localWords.map(w => w.meaning).filter(m => m !== currentWord.meaning);
-        pool = pool.concat(fallbackMeanings);
-        pool.sort(() => 0.5 - Math.random());
+        if (currentReadingStage === 1) {
+            badge.innerText = "Stage 1: Components Check (多选题)";
+            question.innerText = "Please select ALL components that form this word:";
+        } else if (currentReadingStage === 2) {
+            badge.innerText = "Stage 2: Components Meaning (并列单选)";
+            question.innerText = "Select the correct meaning for each component:";
+        } else if (currentReadingStage === 3) {
+            badge.innerText = "Stage 3: Whole Word Translation (单选题)";
+            question.innerText = "Select the correct translation for the entire word:";
+        }
+        // ----------------------------------------------------
+
+        isReadingSubmitted = false;
+        document.getElementById('reading-test-feedback').innerText = "";
+        document.getElementById('reading-test-feedback').style.color = "";
+        document.getElementById('reading-test-next-btn').innerText = "Submit (确认答案)";
         
-        let choices = pool.slice(0, 5);
-        choices.push(currentWord.meaning);
-        choices.sort(() => 0.5 - Math.random());
-        currentOptions = choices;
-        
-        let container = document.getElementById('options-container');
+        let currentItem = localExpandWords[readingTestIndex];
+        document.getElementById('reading-test-word').innerText = currentItem.word;
+        let container = document.getElementById('reading-options-container');
         container.innerHTML = "";
-        choices.forEach((meaning, idx) => {
-            container.innerHTML += `
-                <label class="option-item">
-                    <input type="radio" name="henry-option" value="${meaning}">
-                    ${idx + 1}. ${meaning}
-                </label>
-            `;
-        });
+
+        // ... 后续的 if (currentReadingStage === 1) ... (保持不变)
+        // ... 后续的 else if (currentReadingStage === 2) ... (保持不变)
+        // ... 后续的 else if (currentReadingStage === 3) ... (保持不变)
     }
 
     function submitOrNextTest() {

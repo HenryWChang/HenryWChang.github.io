@@ -735,21 +735,28 @@
     if (localExpandWords.length === 0) return;
     let item = localExpandWords[expandCurrentIndex];
     
-    // 核心改进：直接从视图传回的聚合字段 root_meanings, prefix_meanings, suffix_meanings 读取
-    // 这些字段是你在 Supabase 视图中通过 array_agg 定义的，且前端在 initData 中已将其加载到 localExpandWords 中
-    const formatMeanings = (meaningsArray) => {
-        if (!meaningsArray || meaningsArray.length === 0) return "–";
-        // 数组转字符串显示
-        return `<span style="color:#0284c7"><${meaningsArray.join(' / ')}></span>`;
+    // 核心匹配逻辑：直接参考 Test The Reading 的数据源逻辑
+    // 通过名称（如 ann-）在全局库中精准查找含义
+    const getCorrectMeaning = (compName, libraryArray) => {
+        if (!compName || compName === "none") return "–";
+        
+        // 这里的逻辑与 Test The Reading 中提取正确答案的逻辑完全一致
+        // 将 item.root 这样的字符串与库里的 word 进行模糊匹配
+        const found = libraryArray.find(obj => {
+            const dbWords = String(obj.word).replace(/-/g, '').toLowerCase().split('/');
+            const cleanName = String(compName).replace(/-/g, '').toLowerCase();
+            return dbWords.includes(cleanName);
+        });
+        
+        return found ? `<span style="color:#0284c7"><${found.meaning}></span>` : "–";
     };
 
     const formatVal = (val) => (!val || val === "none") ? "–" : val;
 
-    // 映射逻辑：直接读取视图聚合好的数据
-    // 注意：expand 数据现在直接包含了 root_meanings 等数组，无需额外查表
-    let rootM = formatMeanings(item.root_meanings);
-    let prefixM = formatMeanings(item.prefix_meanings);
-    let suffixM = formatMeanings(item.suffix_meanings);
+    // 分别调用，精准抓取
+    let rootM = getCorrectMeaning(item.root, localRootWords);
+    let prefixM = getCorrectMeaning(item.prefix, localPrefixWords);
+    let suffixM = getCorrectMeaning(item.suffix, localSuffixWords);
 
     let html = `
         <div style="text-align: left; font-size: 16px;">

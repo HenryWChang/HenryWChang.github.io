@@ -106,7 +106,7 @@ async function loadAllVocabulary() {
             supabaseClient.from('supabase_root_words').select('*'),
             supabaseClient.from('supabase_prefix_words').select('*'),
             supabaseClient.from('supabase_suffix_words').select('*'),
-            supabaseClient.from('supabase_expand_words').select('*')
+            supabaseClient.from('view_expand_data').select('*')
         ]);
 
         if (err1 || err2 || err3 || err4 || err5) {
